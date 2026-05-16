@@ -22,6 +22,7 @@ export type Barajita = {
   id: string;
   album_id: string;
   numero: string;
+  orden: number;
   nombre: string | null;
   equipo: string | null;
   rareza: string | null;

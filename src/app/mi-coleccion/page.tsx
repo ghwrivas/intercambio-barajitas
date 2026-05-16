@@ -28,7 +28,7 @@ export default async function MiColeccion() {
     .from("barajitas")
     .select("*")
     .eq("album_id", album.id)
-    .order("numero");
+    .order("orden", { ascending: true });
 
   const { data: coleccionRows } = await supabase
     .from("coleccion")

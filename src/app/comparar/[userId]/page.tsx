@@ -43,7 +43,7 @@ export default async function CompararConUsuario({ params }: { params: { userId:
     .from("barajitas")
     .select("id, numero, nombre, equipo, rareza")
     .eq("album_id", album.id)
-    .order("numero");
+    .order("orden", { ascending: true });
 
   // Colección de ambos usuarios
   const [{ data: miCol }, { data: otroCol }] = await Promise.all([
