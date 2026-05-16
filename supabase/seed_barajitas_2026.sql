@@ -1,0 +1,1251 @@
+-- ============================================================================
+-- SEED: Barajitas reales del Álbum Panini Copa del Mundo 2026
+-- Estructura: 46 especiales FWC + 48 países × 13 barajitas = 670 total
+-- Numeración: FWC-1..FWC-46, luego [CÓDIGO]-1..[CÓDIGO]-13 por país
+--
+-- INSTRUCCIONES:
+--   1. Ejecuta schema.sql primero (debe existir el álbum "Mundial 2026" activo)
+--   2. Ejecuta este archivo en Supabase > SQL Editor
+--   3. Los grupos (A-L) se pueden actualizar una vez confirmado el sorteo
+-- ============================================================================
+
+DO $$
+DECLARE
+  v_album_id   uuid;
+  v_pais       text[];
+  v_codigo     text;
+  v_nombre_pais text;
+  v_grupo      text;
+
+  -- =====================================================================
+  -- Lista de 48 países: [código, nombre, grupo provisional, confederación]
+  -- =====================================================================
+  paises text[][] := ARRAY[
+    -- CONMEBOL (6)
+    ARRAY['ARG','Argentina',        'A','CONMEBOL'],
+    ARRAY['BRA','Brasil',           'B','CONMEBOL'],
+    ARRAY['COL','Colombia',         'C','CONMEBOL'],
+    ARRAY['URU','Uruguay',          'D','CONMEBOL'],
+    ARRAY['ECU','Ecuador',          'E','CONMEBOL'],
+    ARRAY['VEN','Venezuela',        'F','CONMEBOL'],
+    -- CONCACAF (6 incluye 3 anfitriones)
+    ARRAY['USA','Estados Unidos',   'G','CONCACAF'],
+    ARRAY['CAN','Canadá',           'H','CONCACAF'],
+    ARRAY['MEX','México',           'I','CONCACAF'],
+    ARRAY['PAN','Panamá',           'J','CONCACAF'],
+    ARRAY['JAM','Jamaica',          'K','CONCACAF'],
+    ARRAY['CRC','Costa Rica',       'L','CONCACAF'],
+    -- UEFA (16)
+    ARRAY['GER','Alemania',         'A','UEFA'],
+    ARRAY['ENG','Inglaterra',       'B','UEFA'],
+    ARRAY['ESP','España',           'C','UEFA'],
+    ARRAY['POR','Portugal',         'D','UEFA'],
+    ARRAY['FRA','Francia',          'E','UEFA'],
+    ARRAY['NED','Países Bajos',     'F','UEFA'],
+    ARRAY['BEL','Bélgica',          'G','UEFA'],
+    ARRAY['ITA','Italia',           'H','UEFA'],
+    ARRAY['CRO','Croacia',          'I','UEFA'],
+    ARRAY['SUI','Suiza',            'J','UEFA'],
+    ARRAY['AUT','Austria',          'K','UEFA'],
+    ARRAY['SCO','Escocia',          'L','UEFA'],
+    ARRAY['HUN','Hungría',          'A','UEFA'],
+    ARRAY['SVK','Eslovaquia',       'B','UEFA'],
+    ARRAY['SRB','Serbia',           'C','UEFA'],
+    ARRAY['TUR','Turquía',          'D','UEFA'],
+    -- AFC (8)
+    ARRAY['JPN','Japón',            'E','AFC'],
+    ARRAY['KOR','Corea del Sur',    'F','AFC'],
+    ARRAY['IRN','Irán',             'G','AFC'],
+    ARRAY['AUS','Australia',        'H','AFC'],
+    ARRAY['KSA','Arabia Saudita',   'I','AFC'],
+    ARRAY['QAT','Catar',            'J','AFC'],
+    ARRAY['UZB','Uzbekistán',       'K','AFC'],
+    ARRAY['IDN','Indonesia',        'L','AFC'],
+    -- CAF (9)
+    ARRAY['MAR','Marruecos',        'A','CAF'],
+    ARRAY['SEN','Senegal',          'B','CAF'],
+    ARRAY['NGA','Nigeria',          'C','CAF'],
+    ARRAY['EGY','Egipto',           'D','CAF'],
+    ARRAY['CMR','Camerún',          'E','CAF'],
+    ARRAY['RSA','Sudáfrica',        'F','CAF'],
+    ARRAY['COD','RD Congo',         'G','CAF'],
+    ARRAY['MLI','Mali',             'H','CAF'],
+    ARRAY['TUN','Túnez',            'I','CAF'],
+    -- OFC (1)
+    ARRAY['NZL','Nueva Zelanda',    'J','OFC']
+  ];
+
+  -- =====================================================================
+  -- Jugadores por país (código => array de 11 nombres)
+  -- Para países sin nombres específicos se usarán posiciones genéricas
+  -- =====================================================================
+
+BEGIN
+  -- Buscar álbum activo
+  SELECT id INTO v_album_id FROM public.albumes WHERE activo = true LIMIT 1;
+  IF v_album_id IS NULL THEN
+    RAISE EXCEPTION 'No hay álbum activo. Crea primero el álbum del Mundial 2026.';
+  END IF;
+
+  -- Limpiar barajitas de muestra previas
+  DELETE FROM public.barajitas WHERE album_id = v_album_id;
+
+  
+-- ---- ESPECIALES FIFA WORLD CUP (FWC) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'00', 'Panini Logo', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-1', 'Official Emblem 1/2', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-2', 'Official Emblem 2/2', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-3', 'Official Mascots', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-4', 'Official Slogan', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-5', 'Official Ball', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-6', 'Canada', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-7', 'Mexico', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-8', 'USA', 'Especiales FIFA World Cup','rara');
+
+-- ---- MÉXICO (MEX) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'MEX-1', 'México - Escudo', 'México','rara'),
+  (v_album_id,'MEX-2', 'Luis Malagón', 'México','comun'),
+  (v_album_id,'MEX-3', 'Johan Vásquez', 'México','comun'),
+  (v_album_id,'MEX-4', 'Jorge Sánchez', 'México','comun'),
+  (v_album_id,'MEX-5', 'César Montes', 'México','comun'),
+  (v_album_id,'MEX-6', 'Jesús Gallardo', 'México','comun'),
+  (v_album_id,'MEX-7', 'Israel Reyes', 'México','comun'),
+  (v_album_id,'MEX-8', 'Diego Lainez', 'México','comun'),
+  (v_album_id,'MEX-9', 'Carlos Rodríguez', 'México','comun'),
+  (v_album_id,'MEX-10', 'Edson Álvarez', 'México','comun'),
+  (v_album_id,'MEX-11', 'Orbelín Pineda', 'México','comun'),
+  (v_album_id,'MEX-12', 'Marcel Ruiz', 'México','comun'),
+  (v_album_id,'MEX-13', 'México - Foto del Equipo', 'México','comun'),
+  (v_album_id,'MEX-14', 'Érick Sánchez', 'México','comun'),
+  (v_album_id,'MEX-15', 'Hirving Lozano', 'México','comun'),
+  (v_album_id,'MEX-16', 'Santiago Giménez', 'México','comun'),
+  (v_album_id,'MEX-17', 'Raúl Jiménez', 'México','comun'),
+  (v_album_id,'MEX-18', 'Alexis Vega', 'México','comun'),
+  (v_album_id,'MEX-19', 'Roberto Alvarado', 'México','comun'),
+  (v_album_id,'MEX-20', 'César Huerta', 'México','comun');
+
+-- ---- SUDÁFRICA (RSA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'RSA-1', 'Sudáfrica - Escudo', 'Sudáfrica','rara'),
+  (v_album_id,'RSA-2', 'Ronwen Williams', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-3', 'Sipho Chaine', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-4', 'Aubrey Modiba', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-5', 'Samukele Kabini', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-6', 'Mbekezeli Mbokazi', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-7', 'Khulumani Ndamane', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-8', 'Siyabonga Ngezana', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-9', 'Khuliso Mudau', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-10', 'Nkosinathi Sibisi', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-11', 'Teboho Mokoena', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-12', 'Thalente Mbatha', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-13', 'Sudáfrica - Foto del Equipo', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-14', 'Bathuisi Aubaas', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-15', 'Yaya Sithole', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-16', 'Sipho Mbule', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-17', 'Lyle Foster', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-18', 'Ioraam Rayners', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-19', 'Mohau Nkota', 'Sudáfrica','comun'),
+  (v_album_id,'RSA-20', 'Oswin Appolis', 'Sudáfrica','comun');
+
+-- ---- COREA DEL SUR (KOR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'KOR-1', 'Corea del Sur - Escudo', 'Corea del Sur','rara'),
+  (v_album_id,'KOR-2', 'Hyeon-Woo Jo', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-3', 'Seung-Gyu Kim', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-4', 'Min-Jae Kim', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-5', 'Yu-Min Cho', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-6', 'Young-Woo Seol', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-7', 'Han-Beom Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-8', 'Tae-Seok Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-9', 'Myung-Jae Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-10', 'Jae-Sung Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-11', 'In-Beom Hwang', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-12', 'Kang-In Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-13', 'Corea del Sur - Foto del Equipo', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-14', 'Seung-Ho Paik', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-15', 'Jens Castrop', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-16', 'Dong-Gyeong Lee', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-17', 'Gue-Sung Cho', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-18', 'Heung-Min Son', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-19', 'Hee-Chan Hwang', 'Corea del Sur','comun'),
+  (v_album_id,'KOR-20', 'Hyeon-Gyu Oh', 'Corea del Sur','comun');
+
+-- ---- REPÚBLICA CHECA (CZE) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CZE-1', 'República Checa - Escudo', 'República Checa','rara'),
+  (v_album_id,'CZE-2', 'Matěj Kovář', 'República Checa','comun'),
+  (v_album_id,'CZE-3', 'Jindřich Staněk', 'República Checa','comun'),
+  (v_album_id,'CZE-4', 'Ladislav Krejčí', 'República Checa','comun'),
+  (v_album_id,'CZE-5', 'Vladimír Coufal', 'República Checa','comun'),
+  (v_album_id,'CZE-6', 'Jaroslav Zelený', 'República Checa','comun'),
+  (v_album_id,'CZE-7', 'Tomáš Holeš', 'República Checa','comun'),
+  (v_album_id,'CZE-8', 'David Zima', 'República Checa','comun'),
+  (v_album_id,'CZE-9', 'Michal Sadílek', 'República Checa','comun'),
+  (v_album_id,'CZE-10', 'Lukáš Provod', 'República Checa','comun'),
+  (v_album_id,'CZE-11', 'Lukáš Červ', 'República Checa','comun'),
+  (v_album_id,'CZE-12', 'Tomáš Souček', 'República Checa','comun'),
+  (v_album_id,'CZE-13', 'República Checa - Foto del Equipo', 'República Checa','comun'),
+  (v_album_id,'CZE-14', 'Pavel Šulc', 'República Checa','comun'),
+  (v_album_id,'CZE-15', 'Matěj Vydra', 'República Checa','comun'),
+  (v_album_id,'CZE-16', 'Vasil Kušej', 'República Checa','comun'),
+  (v_album_id,'CZE-17', 'Tomáš Chorý', 'República Checa','comun'),
+  (v_album_id,'CZE-18', 'Václav Černý', 'República Checa','comun'),
+  (v_album_id,'CZE-19', 'Adam Hložek', 'República Checa','comun'),
+  (v_album_id,'CZE-20', 'Patrik Schick', 'República Checa','comun');
+
+-- ---- CANADÁ (CAN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CAN-1', 'Canadá - Escudo', 'Canadá','rara'),
+  (v_album_id,'CAN-2', 'Dayne St. Clair', 'Canadá','comun'),
+  (v_album_id,'CAN-3', 'Alphonso Davies', 'Canadá','comun'),
+  (v_album_id,'CAN-4', 'Alistair Johnston', 'Canadá','comun'),
+  (v_album_id,'CAN-5', 'Samuel Adekugbe', 'Canadá','comun'),
+  (v_album_id,'CAN-6', 'Richie Laryea', 'Canadá','comun'),
+  (v_album_id,'CAN-7', 'Derek Cornelius', 'Canadá','comun'),
+  (v_album_id,'CAN-8', 'Moïse Bombito', 'Canadá','comun'),
+  (v_album_id,'CAN-9', 'Kamal Miller', 'Canadá','comun'),
+  (v_album_id,'CAN-10', 'Stephen Eustáquio', 'Canadá','comun'),
+  (v_album_id,'CAN-11', 'Ismaël Koné', 'Canadá','comun'),
+  (v_album_id,'CAN-12', 'Jonathan Osorio', 'Canadá','comun'),
+  (v_album_id,'CAN-13', 'Canadá - Foto del Equipo', 'Canadá','comun'),
+  (v_album_id,'CAN-14', 'Jacob Shaffelburg', 'Canadá','comun'),
+  (v_album_id,'CAN-15', 'Mathieu Choinière', 'Canadá','comun'),
+  (v_album_id,'CAN-16', 'Niko Sigur', 'Canadá','comun'),
+  (v_album_id,'CAN-17', 'Tajon Buchanan', 'Canadá','comun'),
+  (v_album_id,'CAN-18', 'Liam Millar', 'Canadá','comun'),
+  (v_album_id,'CAN-19', 'Cyle Larin', 'Canadá','comun'),
+  (v_album_id,'CAN-20', 'Jonathan David', 'Canadá','comun');
+
+-- ---- BOSNIA Y HERZEGOVINA (BIH) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'BIH-1', 'Bosnia y Herzegovina - Escudo', 'Bosnia y Herzegovina','rara'),
+  (v_album_id,'BIH-2', 'Nikola Vasilj', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-3', 'Amar Dedić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-4', 'Sead Kolašinac', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-5', 'Tarik Muharemović', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-6', 'Nihad Mujakić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-7', 'Nikola Katić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-8', 'Amir Hadžiahmetović', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-9', 'Benjamin Tahirović', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-10', 'Armin Gigović', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-11', 'Ivan Šunjić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-12', 'Ivan Bašić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-13', 'Bosnia y Herzegovina - Foto del Equipo', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-14', 'Dženis Burnić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-15', 'Esmir Bajraktarević', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-16', 'Amar Memić', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-17', 'Ermedin Demirović', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-18', 'Edin Džeko', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-19', 'Samed Baždar', 'Bosnia y Herzegovina','comun'),
+  (v_album_id,'BIH-20', 'Haris Tabaković', 'Bosnia y Herzegovina','comun');
+
+-- ---- CATAR (QAT) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'QAT-1', 'Catar - Escudo', 'Catar','rara'),
+  (v_album_id,'QAT-2', 'Meshaal Barsham', 'Catar','comun'),
+  (v_album_id,'QAT-3', 'Sultan Albrake', 'Catar','comun'),
+  (v_album_id,'QAT-4', 'Lucas Mendes', 'Catar','comun'),
+  (v_album_id,'QAT-5', 'Homam Ahmed', 'Catar','comun'),
+  (v_album_id,'QAT-6', 'Boualem Khoukhi', 'Catar','comun'),
+  (v_album_id,'QAT-7', 'Pedro Miguel', 'Catar','comun'),
+  (v_album_id,'QAT-8', 'Tarek Salman', 'Catar','comun'),
+  (v_album_id,'QAT-9', 'Mohamed Al-Mannai', 'Catar','comun'),
+  (v_album_id,'QAT-10', 'Karim Boudiaf', 'Catar','comun'),
+  (v_album_id,'QAT-11', 'Assim Madibo', 'Catar','comun'),
+  (v_album_id,'QAT-12', 'Ahmed Fatehi', 'Catar','comun'),
+  (v_album_id,'QAT-13', 'Catar - Foto del Equipo', 'Catar','comun'),
+  (v_album_id,'QAT-14', 'Mohammed Waad', 'Catar','comun'),
+  (v_album_id,'QAT-15', 'Abdulaziz Hatem', 'Catar','comun'),
+  (v_album_id,'QAT-16', 'Hassan Al-Haydos', 'Catar','comun'),
+  (v_album_id,'QAT-17', 'Edmilson Junior', 'Catar','comun'),
+  (v_album_id,'QAT-18', 'Akram Hassan Afif', 'Catar','comun'),
+  (v_album_id,'QAT-19', 'Ahmed Al Ganehi', 'Catar','comun'),
+  (v_album_id,'QAT-20', 'Almoez Ali', 'Catar','comun');
+
+-- ---- SUIZA (SUI) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'SUI-1', 'Suiza - Escudo', 'Suiza','rara'),
+  (v_album_id,'SUI-2', 'Gregor Kobel', 'Suiza','comun'),
+  (v_album_id,'SUI-3', 'Yvon Mvogo', 'Suiza','comun'),
+  (v_album_id,'SUI-4', 'Manuel Akanji', 'Suiza','comun'),
+  (v_album_id,'SUI-5', 'Ricardo Rodriguez', 'Suiza','comun'),
+  (v_album_id,'SUI-6', 'Nico Elvedi', 'Suiza','comun'),
+  (v_album_id,'SUI-7', 'Aurèle Amenda', 'Suiza','comun'),
+  (v_album_id,'SUI-8', 'Silvan Widmer', 'Suiza','comun'),
+  (v_album_id,'SUI-9', 'Granit Xhaka', 'Suiza','comun'),
+  (v_album_id,'SUI-10', 'Denis Zakaria', 'Suiza','comun'),
+  (v_album_id,'SUI-11', 'Remo Freuler', 'Suiza','comun'),
+  (v_album_id,'SUI-12', 'Fabian Rieder', 'Suiza','comun'),
+  (v_album_id,'SUI-13', 'Suiza - Foto del Equipo', 'Suiza','comun'),
+  (v_album_id,'SUI-14', 'Ardon Jashari', 'Suiza','comun'),
+  (v_album_id,'SUI-15', 'Johan Manzambi', 'Suiza','comun'),
+  (v_album_id,'SUI-16', 'Michel Aebischer', 'Suiza','comun'),
+  (v_album_id,'SUI-17', 'Breel Embolo', 'Suiza','comun'),
+  (v_album_id,'SUI-18', 'Ruben Vargas', 'Suiza','comun'),
+  (v_album_id,'SUI-19', 'Dan Ndoye', 'Suiza','comun'),
+  (v_album_id,'SUI-20', 'Zeki Amdouni', 'Suiza','comun');
+
+-- ---- BRASIL (BRA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'BRA-1', 'Brasil - Escudo', 'Brasil','rara'),
+  (v_album_id,'BRA-2', 'Alisson', 'Brasil','comun'),
+  (v_album_id,'BRA-3', 'Bento', 'Brasil','comun'),
+  (v_album_id,'BRA-4', 'Marquinhos', 'Brasil','comun'),
+  (v_album_id,'BRA-5', 'Éder Militão', 'Brasil','comun'),
+  (v_album_id,'BRA-6', 'Gabriel Magalhães', 'Brasil','comun'),
+  (v_album_id,'BRA-7', 'Danilo', 'Brasil','comun'),
+  (v_album_id,'BRA-8', 'Wesley', 'Brasil','comun'),
+  (v_album_id,'BRA-9', 'Lucas Paquetá', 'Brasil','comun'),
+  (v_album_id,'BRA-10', 'Casemiro', 'Brasil','comun'),
+  (v_album_id,'BRA-11', 'Bruno Guimarães', 'Brasil','comun'),
+  (v_album_id,'BRA-12', 'Luiz Henrique', 'Brasil','comun'),
+  (v_album_id,'BRA-13', 'Brasil - Foto del Equipo', 'Brasil','comun'),
+  (v_album_id,'BRA-14', 'Vinícius Júnior', 'Brasil','comun'),
+  (v_album_id,'BRA-15', 'Rodrygo', 'Brasil','comun'),
+  (v_album_id,'BRA-16', 'João Pedro', 'Brasil','comun'),
+  (v_album_id,'BRA-17', 'Matheus Cunha', 'Brasil','comun'),
+  (v_album_id,'BRA-18', 'Gabriel Martinelli', 'Brasil','comun'),
+  (v_album_id,'BRA-19', 'Raphinha', 'Brasil','comun'),
+  (v_album_id,'BRA-20', 'Estêvão', 'Brasil','comun');
+
+-- ---- MARRUECOS (MAR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'MAR-1', 'Marruecos - Escudo', 'Marruecos','rara'),
+  (v_album_id,'MAR-2', 'Yassine Bounou', 'Marruecos','comun'),
+  (v_album_id,'MAR-3', 'Munir El Kajoui', 'Marruecos','comun'),
+  (v_album_id,'MAR-4', 'Achraf Hakimi', 'Marruecos','comun'),
+  (v_album_id,'MAR-5', 'Noussair Mazraoui', 'Marruecos','comun'),
+  (v_album_id,'MAR-6', 'Nayef Aguerd', 'Marruecos','comun'),
+  (v_album_id,'MAR-7', 'Romain Saïss', 'Marruecos','comun'),
+  (v_album_id,'MAR-8', 'Jawad El Yamiq', 'Marruecos','comun'),
+  (v_album_id,'MAR-9', 'Adam Masina', 'Marruecos','comun'),
+  (v_album_id,'MAR-10', 'Sofyan Amrabat', 'Marruecos','comun'),
+  (v_album_id,'MAR-11', 'Azzedine Ounahi', 'Marruecos','comun'),
+  (v_album_id,'MAR-12', 'Eliesse Ben Seghir', 'Marruecos','comun'),
+  (v_album_id,'MAR-13', 'Marruecos - Foto del Equipo', 'Marruecos','comun'),
+  (v_album_id,'MAR-14', 'Bilal El Khannouss', 'Marruecos','comun'),
+  (v_album_id,'MAR-15', 'Ismael Saibari', 'Marruecos','comun'),
+  (v_album_id,'MAR-16', 'Youssef En-Nesyri', 'Marruecos','comun'),
+  (v_album_id,'MAR-17', 'Abde Ezzalzouli', 'Marruecos','comun'),
+  (v_album_id,'MAR-18', 'Soufiane Rahimi', 'Marruecos','comun'),
+  (v_album_id,'MAR-19', 'Brahim Díaz', 'Marruecos','comun'),
+  (v_album_id,'MAR-20', 'Ayoub El Kaabi', 'Marruecos','comun');
+
+-- ---- HAITÍ (HAI) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'HAI-1', 'Haití - Escudo', 'Haití','rara'),
+  (v_album_id,'HAI-2', 'Johny Placide', 'Haití','comun'),
+  (v_album_id,'HAI-3', 'Carlens Arcus', 'Haití','comun'),
+  (v_album_id,'HAI-4', 'Martin Expérience', 'Haití','comun'),
+  (v_album_id,'HAI-5', 'Jean-Kevin Duverne', 'Haití','comun'),
+  (v_album_id,'HAI-6', 'Ricardo Adé', 'Haití','comun'),
+  (v_album_id,'HAI-7', 'Duke Lacroix', 'Haití','comun'),
+  (v_album_id,'HAI-8', 'Garven Metusala', 'Haití','comun'),
+  (v_album_id,'HAI-9', 'Hannes Delcroix', 'Haití','comun'),
+  (v_album_id,'HAI-10', 'Leverton Pierre', 'Haití','comun'),
+  (v_album_id,'HAI-11', 'Danley Jean Jacques', 'Haití','comun'),
+  (v_album_id,'HAI-12', 'Jean-Ricner Bellegarde', 'Haití','comun'),
+  (v_album_id,'HAI-13', 'Haití - Foto del Equipo', 'Haití','comun'),
+  (v_album_id,'HAI-14', 'Christopher Attys', 'Haití','comun'),
+  (v_album_id,'HAI-15', 'Derrick Etienne Jr.', 'Haití','comun'),
+  (v_album_id,'HAI-16', 'Josué Casimir', 'Haití','comun'),
+  (v_album_id,'HAI-17', 'Ruben Providence', 'Haití','comun'),
+  (v_album_id,'HAI-18', 'Duckens Nazon', 'Haití','comun'),
+  (v_album_id,'HAI-19', 'Louicius Deedson', 'Haití','comun'),
+  (v_album_id,'HAI-20', 'Frantzdy Pierrot', 'Haití','comun');
+
+-- ---- ESCÓCIA (SCO) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'SCO-1', 'Escócia - Escudo', 'Escócia','rara'),
+  (v_album_id,'SCO-2', 'Angus Gunn', 'Escócia','comun'),
+  (v_album_id,'SCO-3', 'Jack Hendry', 'Escócia','comun'),
+  (v_album_id,'SCO-4', 'Kieran Tierney', 'Escócia','comun'),
+  (v_album_id,'SCO-5', 'Aaron Hickey', 'Escócia','comun'),
+  (v_album_id,'SCO-6', 'Andrew Robertson', 'Escócia','comun'),
+  (v_album_id,'SCO-7', 'Scott Mckenna', 'Escócia','comun'),
+  (v_album_id,'SCO-8', 'John Souttar', 'Escócia','comun'),
+  (v_album_id,'SCO-9', 'Anthony Ralston', 'Escócia','comun'),
+  (v_album_id,'SCO-10', 'Grant Hanley', 'Escócia','comun'),
+  (v_album_id,'SCO-11', 'Scott Mctominay', 'Escócia','comun'),
+  (v_album_id,'SCO-12', 'Billy Gilmour', 'Escócia','comun'),
+  (v_album_id,'SCO-13', 'Escócia - Foto del Equipo', 'Escócia','comun'),
+  (v_album_id,'SCO-14', 'Lewis Ferguson', 'Escócia','comun'),
+  (v_album_id,'SCO-15', 'Ryan Christie', 'Escócia','comun'),
+  (v_album_id,'SCO-16', 'Kenny Mclean', 'Escócia','comun'),
+  (v_album_id,'SCO-17', 'John Mcginn', 'Escócia','comun'),
+  (v_album_id,'SCO-18', 'Lyndon Dykes', 'Escócia','comun'),
+  (v_album_id,'SCO-19', 'Che Adams', 'Escócia','comun'),
+  (v_album_id,'SCO-20', 'Ben Gannon-Doak', 'Escócia','comun');
+
+-- ---- ESTADOS UNIDOS (USA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'USA-1', 'Estados Unidos - Escudo', 'Estados Unidos','rara'),
+  (v_album_id,'USA-2', 'Math Freese', 'Estados Unidos','comun'),
+  (v_album_id,'USA-3', 'Chris Richards', 'Estados Unidos','comun'),
+  (v_album_id,'USA-4', 'Tim Ream', 'Estados Unidos','comun'),
+  (v_album_id,'USA-5', 'Mark Mckenzie', 'Estados Unidos','comun'),
+  (v_album_id,'USA-6', 'Alex Freeman', 'Estados Unidos','comun'),
+  (v_album_id,'USA-7', 'Antonee Robinson', 'Estados Unidos','comun'),
+  (v_album_id,'USA-8', 'Tyler Adams', 'Estados Unidos','comun'),
+  (v_album_id,'USA-9', 'Tanner Tessmann', 'Estados Unidos','comun'),
+  (v_album_id,'USA-10', 'Weston Mckennie', 'Estados Unidos','comun'),
+  (v_album_id,'USA-11', 'Christian Roldan', 'Estados Unidos','comun'),
+  (v_album_id,'USA-12', 'Timothy Weah', 'Estados Unidos','comun'),
+  (v_album_id,'USA-13', 'Estados Unidos - Foto del Equipo', 'Estados Unidos','comun'),
+  (v_album_id,'USA-14', 'Diego Luna', 'Estados Unidos','comun'),
+  (v_album_id,'USA-15', 'Malim Tillman', 'Estados Unidos','comun'),
+  (v_album_id,'USA-16', 'Christian Pulisic', 'Estados Unidos','comun'),
+  (v_album_id,'USA-17', 'Brenden Aaronson', 'Estados Unidos','comun'),
+  (v_album_id,'USA-18', 'Ricardo Pepi', 'Estados Unidos','comun'),
+  (v_album_id,'USA-19', 'Haji Wright', 'Estados Unidos','comun'),
+  (v_album_id,'USA-20', 'Folarin Balogun', 'Estados Unidos','comun');
+
+-- ---- PARAGUAY (PAR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'PAR-1', 'Paraguay - Escudo', 'Paraguay','rara'),
+  (v_album_id,'PAR-2', 'Roberto Fernández', 'Paraguay','comun'),
+  (v_album_id,'PAR-3', 'Orlando Gill', 'Paraguay','comun'),
+  (v_album_id,'PAR-4', 'Gustavo Gómez', 'Paraguay','comun'),
+  (v_album_id,'PAR-5', 'Fabián Balbuena', 'Paraguay','comun'),
+  (v_album_id,'PAR-6', 'Juan José Cáceres', 'Paraguay','comun'),
+  (v_album_id,'PAR-7', 'Omar Alderete', 'Paraguay','comun'),
+  (v_album_id,'PAR-8', 'Junior Alonso', 'Paraguay','comun'),
+  (v_album_id,'PAR-9', 'Mathías Villasanti', 'Paraguay','comun'),
+  (v_album_id,'PAR-10', 'Diego Gómez', 'Paraguay','comun'),
+  (v_album_id,'PAR-11', 'Damián Bobadilla', 'Paraguay','comun'),
+  (v_album_id,'PAR-12', 'Andrés Cubas', 'Paraguay','comun'),
+  (v_album_id,'PAR-13', 'Paraguay - Foto del Equipo', 'Paraguay','comun'),
+  (v_album_id,'PAR-14', 'Matías Galarza Fonda', 'Paraguay','comun'),
+  (v_album_id,'PAR-15', 'Julio Enciso', 'Paraguay','comun'),
+  (v_album_id,'PAR-16', 'Alejandro Romero Gamarra', 'Paraguay','comun'),
+  (v_album_id,'PAR-17', 'Miguel Almirón', 'Paraguay','comun'),
+  (v_album_id,'PAR-18', 'Ramón Sosa', 'Paraguay','comun'),
+  (v_album_id,'PAR-19', 'Ángel Romero', 'Paraguay','comun'),
+  (v_album_id,'PAR-20', 'Antonio Sanabria', 'Paraguay','comun');
+
+-- ---- AUSTRALIA (AUS) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'AUS-1', 'Australia - Escudo', 'Australia','rara'),
+  (v_album_id,'AUS-2', 'Mathew Ryan', 'Australia','comun'),
+  (v_album_id,'AUS-3', 'Joe Gauci', 'Australia','comun'),
+  (v_album_id,'AUS-4', 'Harry Souttar', 'Australia','comun'),
+  (v_album_id,'AUS-5', 'Alessandro Circati', 'Australia','comun'),
+  (v_album_id,'AUS-6', 'Jordan Bos', 'Australia','comun'),
+  (v_album_id,'AUS-7', 'Aziz Behich', 'Australia','comun'),
+  (v_album_id,'AUS-8', 'Cameron Burgess', 'Australia','comun'),
+  (v_album_id,'AUS-9', 'Lewis Miller', 'Australia','comun'),
+  (v_album_id,'AUS-10', 'Milos Degenek', 'Australia','comun'),
+  (v_album_id,'AUS-11', 'Jackson Irvine', 'Australia','comun'),
+  (v_album_id,'AUS-12', 'Riley Mcgree', 'Australia','comun'),
+  (v_album_id,'AUS-13', 'Australia - Foto del Equipo', 'Australia','comun'),
+  (v_album_id,'AUS-14', 'Aiden O''Neill', 'Australia','comun'),
+  (v_album_id,'AUS-15', 'Connor Metcalfe', 'Australia','comun'),
+  (v_album_id,'AUS-16', 'Patrick Yazbek', 'Australia','comun'),
+  (v_album_id,'AUS-17', 'Craig Goodwin', 'Australia','comun'),
+  (v_album_id,'AUS-18', 'Kusini Yengi', 'Australia','comun'),
+  (v_album_id,'AUS-19', 'Nestory Irankunda', 'Australia','comun'),
+  (v_album_id,'AUS-20', 'Mohamed Touré', 'Australia','comun');
+
+
+-- ---- TURQUÍA (TUR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'TUR-1', 'Turquía - Escudo', 'Turquía','rara'),
+  (v_album_id,'TUR-2', 'Ugurcan Cakir', 'Turquía','comun'),
+  (v_album_id,'TUR-3', 'Mert Muldur', 'Turquía','comun'),
+  (v_album_id,'TUR-4', 'Zeki Celik', 'Turquía','comun'),
+  (v_album_id,'TUR-5', 'Abdulkerim Bardakci', 'Turquía','comun'),
+  (v_album_id,'TUR-6', 'Caglar Soyuncu', 'Turquía','comun'),
+  (v_album_id,'TUR-7', 'Merih Demiral', 'Turquía','comun'),
+  (v_album_id,'TUR-8', 'Ferdi Kadioglu', 'Turquía','comun'),
+  (v_album_id,'TUR-9', 'Kaan Ayhan', 'Turquía','comun'),
+  (v_album_id,'TUR-10', 'Ismail Yuksek', 'Turquía','comun'),
+  (v_album_id,'TUR-11', 'Hakan Calhanoglu', 'Turquía','comun'),
+  (v_album_id,'TUR-12', 'Orkun Kokcu', 'Turquía','comun'),
+  (v_album_id,'TUR-13', 'Turquía - Foto del Equipo', 'Turquía','comun'),
+  (v_album_id,'TUR-14', 'Arda Güler', 'Turquía','comun'),
+  (v_album_id,'TUR-15', 'Irfan Can Kahveci', 'Turquía','comun'),
+  (v_album_id,'TUR-16', 'Yunus Akgun', 'Turquía','comun'),
+  (v_album_id,'TUR-17', 'Can Uzun', 'Turquía','comun'),
+  (v_album_id,'TUR-18', 'Baris Alper Yilmaz', 'Turquía','comun'),
+  (v_album_id,'TUR-19', 'Kerem Akturkoglu', 'Turquía','comun'),
+  (v_album_id,'TUR-20', 'Kenan Yildiz', 'Turquía','comun');
+
+-- ---- ALEMANIA (GER) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'GER-1', 'Alemania - Escudo', 'Alemania','rara'),
+  (v_album_id,'GER-2', 'Marc-André Ter Stegen', 'Alemania','comun'),
+  (v_album_id,'GER-3', 'Jonathan Tah', 'Alemania','comun'),
+  (v_album_id,'GER-4', 'David Raum', 'Alemania','comun'),
+  (v_album_id,'GER-5', 'Nico Schlotterbeck', 'Alemania','comun'),
+  (v_album_id,'GER-6', 'Antonio Rüdiger', 'Alemania','comun'),
+  (v_album_id,'GER-7', 'Waldemar Anton', 'Alemania','comun'),
+  (v_album_id,'GER-8', 'Ridle Baku', 'Alemania','comun'),
+  (v_album_id,'GER-9', 'Maximilian Mittelstädt', 'Alemania','comun'),
+  (v_album_id,'GER-10', 'Joshua Kimmich', 'Alemania','comun'),
+  (v_album_id,'GER-11', 'Florian Wirtz', 'Alemania','comun'),
+  (v_album_id,'GER-12', 'Felix Nmecha', 'Alemania','comun'),
+  (v_album_id,'GER-13', 'Alemania - Foto del Equipo', 'Alemania','comun'),
+  (v_album_id,'GER-14', 'Leon Goretzka', 'Alemania','comun'),
+  (v_album_id,'GER-15', 'Jamal Musiala', 'Alemania','comun'),
+  (v_album_id,'GER-16', 'Serge Gnabry', 'Alemania','comun'),
+  (v_album_id,'GER-17', 'Kai Havertz', 'Alemania','comun'),
+  (v_album_id,'GER-18', 'Leroy Sané', 'Alemania','comun'),
+  (v_album_id,'GER-19', 'Karim Adeyemi', 'Alemania','comun'),
+  (v_album_id,'GER-20', 'Nick Woltemade', 'Alemania','comun');
+
+-- ---- CURAZAO (CUW) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CUW-1', 'Curazao - Escudo', 'Curazao','rara'),
+  (v_album_id,'CUW-2', 'Eloy Room', 'Curazao','comun'),
+  (v_album_id,'CUW-3', 'Armando Obispo', 'Curazao','comun'),
+  (v_album_id,'CUW-4', 'Sherel Floranus', 'Curazao','comun'),
+  (v_album_id,'CUW-5', 'Jurien Gaari', 'Curazao','comun'),
+  (v_album_id,'CUW-6', 'Joshua Brenet', 'Curazao','comun'),
+  (v_album_id,'CUW-7', 'Roshon Van Eijma', 'Curazao','comun'),
+  (v_album_id,'CUW-8', 'Shurandy Sambo', 'Curazao','comun'),
+  (v_album_id,'CUW-9', 'Livano Comenencia', 'Curazao','comun'),
+  (v_album_id,'CUW-10', 'Godfried Roemeratoe', 'Curazao','comun'),
+  (v_album_id,'CUW-11', 'Juninho Bacuna', 'Curazao','comun'),
+  (v_album_id,'CUW-12', 'Leandro Bacuna', 'Curazao','comun'),
+  (v_album_id,'CUW-13', 'Curazao - Foto del Equipo', 'Curazao','comun'),
+  (v_album_id,'CUW-14', 'Tahith Chong', 'Curazao','comun'),
+  (v_album_id,'CUW-15', 'Kenji Gorré', 'Curazao','comun'),
+  (v_album_id,'CUW-16', 'Jearl Margaritha', 'Curazao','comun'),
+  (v_album_id,'CUW-17', 'Jurgen Locadia', 'Curazao','comun'),
+  (v_album_id,'CUW-18', 'Jeremy Antonisse', 'Curazao','comun'),
+  (v_album_id,'CUW-19', 'Gervane Kastaneer', 'Curazao','comun'),
+  (v_album_id,'CUW-20', 'Sontje Hansen', 'Curazao','comun');
+
+-- ---- COSTA DE MARFIL (CIV) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CIV-1', 'Costa de Marfil - Escudo', 'Costa de Marfil','rara'),
+  (v_album_id,'CIV-2', 'Yahia Fofana', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-3', 'Ghislain Konan', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-4', 'Wilfried Singo', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-5', 'Odilon Kossounou', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-6', 'Evan Ndicka', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-7', 'Willy Boly', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-8', 'Emmanuel Agbadou', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-9', 'Ousmane Diomande', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-10', 'Franck Kessié', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-11', 'Seko Fofana', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-12', 'Ibrahim Sangaré', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-13', 'Costa de Marfil - Foto del Equipo', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-14', 'Jean-Philippe Gbamin', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-15', 'Amad Diallo', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-16', 'Sébastien Haller', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-17', 'Simon Adingra', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-18', 'Yan Diomande', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-19', 'Evann Guessand', 'Costa de Marfil','comun'),
+  (v_album_id,'CIV-20', 'Oumar Diakité', 'Costa de Marfil','comun');
+
+
+-- ---- ECUADOR (ECU) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'ECU-1', 'Ecuador - Escudo', 'Ecuador','rara'),
+  (v_album_id,'ECU-2', 'Hernán Galíndez', 'Ecuador','comun'),
+  (v_album_id,'ECU-3', 'Gonzalo Valle', 'Ecuador','comun'),
+  (v_album_id,'ECU-4', 'Piero Hincapié', 'Ecuador','comun'),
+  (v_album_id,'ECU-5', 'Pervis Estupiñán', 'Ecuador','comun'),
+  (v_album_id,'ECU-6', 'Willian Pacho', 'Ecuador','comun'),
+  (v_album_id,'ECU-7', 'Ángelo Preciado', 'Ecuador','comun'),
+  (v_album_id,'ECU-8', 'Joel Ordóñez', 'Ecuador','comun'),
+  (v_album_id,'ECU-9', 'Moisés Caicedo', 'Ecuador','comun'),
+  (v_album_id,'ECU-10', 'Alan Franco', 'Ecuador','comun'),
+  (v_album_id,'ECU-11', 'Kendry Páez', 'Ecuador','comun'),
+  (v_album_id,'ECU-12', 'Pedro Vite', 'Ecuador','comun'),
+  (v_album_id,'ECU-13', 'Ecuador - Foto del Equipo', 'Ecuador','comun'),
+  (v_album_id,'ECU-14', 'John Yeboah', 'Ecuador','comun'),
+  (v_album_id,'ECU-15', 'Leonardo Campana', 'Ecuador','comun'),
+  (v_album_id,'ECU-16', 'Gonzalo Plata', 'Ecuador','comun'),
+  (v_album_id,'ECU-17', 'Nilson Angulo', 'Ecuador','comun'),
+  (v_album_id,'ECU-18', 'Alan Minda', 'Ecuador','comun'),
+  (v_album_id,'ECU-19', 'Kevin Rodríguez', 'Ecuador','comun'),
+  (v_album_id,'ECU-20', 'Enner Valencia', 'Ecuador','comun');
+
+-- ---- PAÍSES BAJOS (NED) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'NED-1', 'Países Bajos - Escudo', 'Países Bajos','rara'),
+  (v_album_id,'NED-2', 'Bart Verbruggen', 'Países Bajos','comun'),
+  (v_album_id,'NED-3', 'Virgil Van Dijk', 'Países Bajos','comun'),
+  (v_album_id,'NED-4', 'Micky Van De Ven', 'Países Bajos','comun'),
+  (v_album_id,'NED-5', 'Jurriën Timber', 'Países Bajos','comun'),
+  (v_album_id,'NED-6', 'Denzel Dumfries', 'Países Bajos','comun'),
+  (v_album_id,'NED-7', 'Nathan Aké', 'Países Bajos','comun'),
+  (v_album_id,'NED-8', 'Jeremie Frimpong', 'Países Bajos','comun'),
+  (v_album_id,'NED-9', 'Jan Paul Van Hecke', 'Países Bajos','comun'),
+  (v_album_id,'NED-10', 'Tijjani Reijnders', 'Países Bajos','comun'),
+  (v_album_id,'NED-11', 'Ryan Gravenberch', 'Países Bajos','comun'),
+  (v_album_id,'NED-12', 'Teun Koopmeiners', 'Países Bajos','comun'),
+  (v_album_id,'NED-13', 'Países Bajos - Foto del Equipo', 'Países Bajos','comun'),
+  (v_album_id,'NED-14', 'Frenkie De Jong', 'Países Bajos','comun'),
+  (v_album_id,'NED-15', 'Xavi Simons', 'Países Bajos','comun'),
+  (v_album_id,'NED-16', 'Justin Kluivert', 'Países Bajos','comun'),
+  (v_album_id,'NED-17', 'Memphis Depay', 'Países Bajos','comun'),
+  (v_album_id,'NED-18', 'Donyell Malen', 'Países Bajos','comun'),
+  (v_album_id,'NED-19', 'Wout Weghorst', 'Países Bajos','comun'),
+  (v_album_id,'NED-20', 'Cody Gakpo', 'Países Bajos','comun');
+
+-- ---- JAPÓN (JPN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'JPN-1', 'Japón - Escudo', 'Japón','rara'),
+  (v_album_id,'JPN-2', 'Zion Suzuki', 'Japón','comun'),
+  (v_album_id,'JPN-3', 'Henry Heroki Mochizuki', 'Japón','comun'),
+  (v_album_id,'JPN-4', 'Ayumu Seko', 'Japón','comun'),
+  (v_album_id,'JPN-5', 'Junnosuke Suzuki', 'Japón','comun'),
+  (v_album_id,'JPN-6', 'Shogo Taniguchi', 'Japón','comun'),
+  (v_album_id,'JPN-7', 'Tsuyoshi Watanabe', 'Japón','comun'),
+  (v_album_id,'JPN-8', 'Kaishu Sano', 'Japón','comun'),
+  (v_album_id,'JPN-9', 'Yuki Soma', 'Japón','comun'),
+  (v_album_id,'JPN-10', 'Ao Tanaka', 'Japón','comun'),
+  (v_album_id,'JPN-11', 'Daichi Kamada', 'Japón','comun'),
+  (v_album_id,'JPN-12', 'Takefusa Kubo', 'Japón','comun'),
+  (v_album_id,'JPN-13', 'Japón - Foto del Equipo', 'Japón','comun'),
+  (v_album_id,'JPN-14', 'Ritsu Doan', 'Japón','comun'),
+  (v_album_id,'JPN-15', 'Keito Nakamura', 'Japón','comun'),
+  (v_album_id,'JPN-16', 'Takumi Minamino', 'Japón','comun'),
+  (v_album_id,'JPN-17', 'Shuto Machino', 'Japón','comun'),
+  (v_album_id,'JPN-18', 'Junya Ito', 'Japón','comun'),
+  (v_album_id,'JPN-19', 'Koki Ogawa', 'Japón','comun'),
+  (v_album_id,'JPN-20', 'Ayase Ueda', 'Japón','comun');
+
+-- ---- SUECIA (SWE) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'SWE-1', 'Suecia - Escudo', 'Suecia','rara'),
+  (v_album_id,'SWE-2', 'Victor Johansson', 'Suecia','comun'),
+  (v_album_id,'SWE-3', 'Isak Hien', 'Suecia','comun'),
+  (v_album_id,'SWE-4', 'Gabriel Gudmundsson', 'Suecia','comun'),
+  (v_album_id,'SWE-5', 'Emil Holm', 'Suecia','comun'),
+  (v_album_id,'SWE-6', 'Victor Nilsson Lindelöf', 'Suecia','comun'),
+  (v_album_id,'SWE-7', 'Gustaf Lagerbielke', 'Suecia','comun'),
+  (v_album_id,'SWE-8', 'Lucas Bergvall', 'Suecia','comun'),
+  (v_album_id,'SWE-9', 'Hugo Larsson', 'Suecia','comun'),
+  (v_album_id,'SWE-10', 'Jesper Karlström', 'Suecia','comun'),
+  (v_album_id,'SWE-11', 'Yasin Ayari', 'Suecia','comun'),
+  (v_album_id,'SWE-12', 'Mattias Svanberg', 'Suecia','comun'),
+  (v_album_id,'SWE-13', 'Suecia - Foto del Equipo', 'Suecia','comun'),
+  (v_album_id,'SWE-14', 'Daniel Svensson', 'Suecia','comun'),
+  (v_album_id,'SWE-15', 'Ken Sema', 'Suecia','comun'),
+  (v_album_id,'SWE-16', 'Roony Bardghji', 'Suecia','comun'),
+  (v_album_id,'SWE-17', 'Dejan Kulusevski', 'Suecia','comun'),
+  (v_album_id,'SWE-18', 'Anthony Elanga', 'Suecia','comun'),
+  (v_album_id,'SWE-19', 'Alexander Isak', 'Suecia','comun'),
+  (v_album_id,'SWE-20', 'Viktor Gyökeres', 'Suecia','comun');
+
+-- ---- TÚNEZ (TUN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'TUN-1', 'Túnez - Escudo', 'Túnez','rara'),
+  (v_album_id,'TUN-2', 'Bechir Ben Said', 'Túnez','comun'),
+  (v_album_id,'TUN-3', 'Aymen Dahmen', 'Túnez','comun'),
+  (v_album_id,'TUN-4', 'Van Valery', 'Túnez','comun'),
+  (v_album_id,'TUN-5', 'Montassar Talbi', 'Túnez','comun'),
+  (v_album_id,'TUN-6', 'Yassine Meriah', 'Túnez','comun'),
+  (v_album_id,'TUN-7', 'Ali Abdi', 'Túnez','comun'),
+  (v_album_id,'TUN-8', 'Dylan Bronn', 'Túnez','comun'),
+  (v_album_id,'TUN-9', 'Ellyes Skhiri', 'Túnez','comun'),
+  (v_album_id,'TUN-10', 'Aissa Laidouni', 'Túnez','comun'),
+  (v_album_id,'TUN-11', 'Ferjani Sassi', 'Túnez','comun'),
+  (v_album_id,'TUN-12', 'Mohamed Ali Ben Romdhane', 'Túnez','comun'),
+  (v_album_id,'TUN-13', 'Túnez - Foto del Equipo', 'Túnez','comun'),
+  (v_album_id,'TUN-14', 'Hannibal Mejbri', 'Túnez','comun'),
+  (v_album_id,'TUN-15', 'Elias Achouri', 'Túnez','comun'),
+  (v_album_id,'TUN-16', 'Elias Saad', 'Túnez','comun'),
+  (v_album_id,'TUN-17', 'Hazem Mastouri', 'Túnez','comun'),
+  (v_album_id,'TUN-18', 'Ismael Gharbi', 'Túnez','comun'),
+  (v_album_id,'TUN-19', 'Sayfallah Ltaief', 'Túnez','comun'),
+  (v_album_id,'TUN-20', 'Naim Sliti', 'Túnez','comun');
+
+-- ---- BÉLGICA (BEL) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'BEL-1', 'Bélgica - Escudo', 'Bélgica','rara'),
+  (v_album_id,'BEL-2', 'Thibaut Courtois', 'Bélgica','comun'),
+  (v_album_id,'BEL-3', 'Arthur Theate', 'Bélgica','comun'),
+  (v_album_id,'BEL-4', 'Timothy Castagne', 'Bélgica','comun'),
+  (v_album_id,'BEL-5', 'Zeno Debast', 'Bélgica','comun'),
+  (v_album_id,'BEL-6', 'Brandom Michelle', 'Bélgica','comun'),
+  (v_album_id,'BEL-7', 'Maxim De Cuyper', 'Bélgica','comun'),
+  (v_album_id,'BEL-8', 'Thomas Meunier', 'Bélgica','comun'),
+  (v_album_id,'BEL-9', 'Youri Tielemans', 'Bélgica','comun'),
+  (v_album_id,'BEL-10', 'Amadou Onana', 'Bélgica','comun'),
+  (v_album_id,'BEL-11', 'Nicolas Raskin', 'Bélgica','comun'),
+  (v_album_id,'BEL-12', 'Alexis Saelemaekers', 'Bélgica','comun'),
+  (v_album_id,'BEL-13', 'Bélgica - Foto del Equipo', 'Bélgica','comun'),
+  (v_album_id,'BEL-14', 'Hans Vanaken', 'Bélgica','comun'),
+  (v_album_id,'BEL-15', 'Kevin De Bruyne', 'Bélgica','comun'),
+  (v_album_id,'BEL-16', 'Jéremy Doku', 'Bélgica','comun'),
+  (v_album_id,'BEL-17', 'Charles De Ketelaere', 'Bélgica','comun'),
+  (v_album_id,'BEL-18', 'Leandro Trossard', 'Bélgica','comun'),
+  (v_album_id,'BEL-19', 'Lois Openda', 'Bélgica','comun'),
+  (v_album_id,'BEL-20', 'Romelu Lukaku', 'Bélgica','comun');
+
+-- ---- EGIPTO (EGY) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'EGY-1', 'Egipto - Escudo', 'Egipto','rara'),
+  (v_album_id,'EGY-2', 'Mohamed El Shenawy', 'Egipto','comun'),
+  (v_album_id,'EGY-3', 'Mohamed Hany', 'Egipto','comun'),
+  (v_album_id,'EGY-4', 'Mohamed Handy', 'Egipto','comun'),
+  (v_album_id,'EGY-5', 'Yasser Ibrahim', 'Egipto','comun'),
+  (v_album_id,'EGY-6', 'Khaled Sobhi', 'Egipto','comun'),
+  (v_album_id,'EGY-7', 'Ramy Rabia', 'Egipto','comun'),
+  (v_album_id,'EGY-8', 'Hossam Abdelmaguid', 'Egipto','comun'),
+  (v_album_id,'EGY-9', 'Ahmed Fatouh', 'Egipto','comun'),
+  (v_album_id,'EGY-10', 'Marwan Attia', 'Egipto','comun'),
+  (v_album_id,'EGY-11', 'Zizo', 'Egipto','comun'),
+  (v_album_id,'EGY-12', 'Hamdy Fathy', 'Egipto','comun'),
+  (v_album_id,'EGY-13', 'Egipto - Foto del Equipo', 'Egipto','comun'),
+  (v_album_id,'EGY-14', 'Mohanad Laheen', 'Egipto','comun'),
+  (v_album_id,'EGY-15', 'Eman Ashour', 'Egipto','comun'),
+  (v_album_id,'EGY-16', 'Osama Faisal', 'Egipto','comun'),
+  (v_album_id,'EGY-17', 'Mohamed Salah', 'Egipto','comun'),
+  (v_album_id,'EGY-18', 'Mostafa Mohamed', 'Egipto','comun'),
+  (v_album_id,'EGY-19', 'Trezeguet', 'Egipto','comun'),
+  (v_album_id,'EGY-20', 'Omar Marmoush', 'Egipto','comun');
+
+-- ---- IRÁN (IRN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'IRN-1', 'Irán - Escudo', 'Irán','rara'),
+  (v_album_id,'IRN-2', 'Alireza Beiranvand', 'Irán','comun'),
+  (v_album_id,'IRN-3', 'Payam Niazmand', 'Irán','comun'),
+  (v_album_id,'IRN-4', 'Shoja Khalilzadeh', 'Irán','comun'),
+  (v_album_id,'IRN-5', 'Hossein Kanaani', 'Irán','comun'),
+  (v_album_id,'IRN-6', 'Milad Mohammadi', 'Irán','comun'),
+  (v_album_id,'IRN-7', 'Ramin Rezaeian', 'Irán','comun'),
+  (v_album_id,'IRN-8', 'Arya Yousefi', 'Irán','comun'),
+  (v_album_id,'IRN-9', 'Saeid Ezatolahi', 'Irán','comun'),
+  (v_album_id,'IRN-10', 'Saman Ghoddos', 'Irán','comun'),
+  (v_album_id,'IRN-11', 'Mohammad Ghorbani', 'Irán','comun'),
+  (v_album_id,'IRN-12', 'Alireza Jahanbakhsh', 'Irán','comun'),
+  (v_album_id,'IRN-13', 'Irán - Foto del Equipo', 'Irán','comun'),
+  (v_album_id,'IRN-14', 'Omid Afkan', 'Irán','comun'),
+  (v_album_id,'IRN-15', 'Mehdi Gayedi', 'Irán','comun'),
+  (v_album_id,'IRN-16', 'Mohammad Mohebi', 'Irán','comun'),
+  (v_album_id,'IRN-17', 'Mehdi Taremi', 'Irán','comun'),
+  (v_album_id,'IRN-18', 'Sardar Azmoun', 'Irán','comun'),
+  (v_album_id,'IRN-19', 'Shahriyar Moghanlou', 'Irán','comun'),
+  (v_album_id,'IRN-20', 'Allahyar Sayyadmanesh', 'Irán','comun');
+
+-- ---- NUEVA ZELANDA (NZL) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'NZL-1', 'Nueva Zelanda - Escudo', 'Nueva Zelanda','rara'),
+  (v_album_id,'NZL-2', 'Alex Paulsen', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-3', 'Max Crocombe', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-4', 'Liberato Cacace', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-5', 'Michael Boxall', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-6', 'Tyler Bindon', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-7', 'Finn Surman', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-8', 'Bill Tuiloma', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-9', 'Joe Bell', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-10', 'Marko Stamenic', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-11', 'Matthew Garbett', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-12', 'Ryan Thomas', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-13', 'Nueva Zelanda - Foto del Equipo', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-14', 'Sarpreet Singh', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-15', 'Elijah Just', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-16', 'Ben Old', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-17', 'Kosta Barbarouses', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-18', 'Chris Wood', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-19', 'Ben Waine', 'Nueva Zelanda','comun'),
+  (v_album_id,'NZL-20', 'Max Mata', 'Nueva Zelanda','comun');
+
+-- ---- ESPAÑA (ESP) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'ESP-1', 'España - Escudo', 'España','rara'),
+  (v_album_id,'ESP-2', 'Unai Simón', 'España','comun'),
+  (v_album_id,'ESP-3', 'Robin Le Normand', 'España','comun'),
+  (v_album_id,'ESP-4', 'Aymeric Laporte', 'España','comun'),
+  (v_album_id,'ESP-5', 'Dean Huijsen', 'España','comun'),
+  (v_album_id,'ESP-6', 'Pedro Prro', 'España','comun'),
+  (v_album_id,'ESP-7', 'Dani Carvajal', 'España','comun'),
+  (v_album_id,'ESP-8', 'Marc Cucurella', 'España','comun'),
+  (v_album_id,'ESP-9', 'Martin Zubimendi', 'España','comun'),
+  (v_album_id,'ESP-10', 'Rodri', 'España','comun'),
+  (v_album_id,'ESP-11', 'Pedri', 'España','comun'),
+  (v_album_id,'ESP-12', 'Fabián Ruiz', 'España','comun'),
+  (v_album_id,'ESP-13', 'España - Foto del Equipo', 'España','comun'),
+  (v_album_id,'ESP-14', 'Mikel Merino', 'España','comun'),
+  (v_album_id,'ESP-15', 'Lamine Yamal', 'España','comun'),
+  (v_album_id,'ESP-16', 'Dani Olmo', 'España','comun'),
+  (v_album_id,'ESP-17', 'Nico Williams', 'España','comun'),
+  (v_album_id,'ESP-18', 'Ferran Torres', 'España','comun'),
+  (v_album_id,'ESP-19', 'Alvaro Morata', 'España','comun'),
+  (v_album_id,'ESP-20', 'Mikel Oyarzabal', 'España','comun');
+
+-- ---- CABO VERDE (CPV) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CPV-1', 'Cabo Verde - Escudo', 'Cabo Verde','rara'),
+  (v_album_id,'CPV-2', 'Vozinha', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-3', 'Bruno Varela', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-4', 'Pico', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-5', 'Roberto Lopes', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-6', 'Steven Moreira', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-7', 'Wagner Pina', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-8', 'João Paulo', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-9', 'Kevin Pina', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-10', 'Patrick Andrade', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-11', 'Deriyy Duarte', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-12', 'Kenny Rocha', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-13', 'Cabo Verde - Foto del Equipo', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-14', 'Jovane Cabral', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-15', 'Ryan Mendes', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-16', 'Garry Rodrigues', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-17', 'Jamiro Monteiro', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-18', 'Willy Semedo', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-19', 'Gilson Tavares', 'Cabo Verde','comun'),
+  (v_album_id,'CPV-20', 'Bebé', 'Cabo Verde','comun');
+
+-- ---- ARABIA SAUDITA (KSA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'KSA-1', 'Arabia Saudita - Escudo', 'Arabia Saudita','rara'),
+  (v_album_id,'KSA-2', 'Nawaf Alaqidi', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-3', 'Abdulrahman Al-Sanbi', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-4', 'Saud Abdulhamid', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-5', 'Nawaf Boushal', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-6', 'Jihad Thakri', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-7', 'Ali Lajami', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-8', 'Rayan Hamed', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-9', 'Moteb Al-Harbi', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-10', 'Ziyad Aljohani', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-11', 'Abdullah Alkhaibari', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-12', 'Musab Al-Juwayr', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-13', 'Arabia Saudita - Foto del Equipo', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-14', 'Faisal Al-Ghamdi', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-15', 'Abbas Al-Hassan', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-16', 'Salem Al-Dawsari', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-17', 'Abdulrahman Ghareeb', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-18', 'Ayman Yahya', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-19', 'Farras Al-Brikan', 'Arabia Saudita','comun'),
+  (v_album_id,'KSA-20', 'Saleh Al-Shehri', 'Arabia Saudita','comun');
+
+-- ---- URUGUAY (URU) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'URU-1', 'Uruguay - Escudo', 'Uruguay','rara'),
+  (v_album_id,'URU-2', 'Sergio Rochet', 'Uruguay','comun'),
+  (v_album_id,'URU-3', 'Santiago Mele', 'Uruguay','comun'),
+  (v_album_id,'URU-4', 'Ronald Araujo', 'Uruguay','comun'),
+  (v_album_id,'URU-5', 'José María Giménez', 'Uruguay','comun'),
+  (v_album_id,'URU-6', 'Sebastián Cáceres', 'Uruguay','comun'),
+  (v_album_id,'URU-7', 'Mathías Olivera', 'Uruguay','comun'),
+  (v_album_id,'URU-8', 'Guillermo Varela', 'Uruguay','comun'),
+  (v_album_id,'URU-9', 'Nahitan Nández', 'Uruguay','comun'),
+  (v_album_id,'URU-10', 'Federico Valverde', 'Uruguay','comun'),
+  (v_album_id,'URU-11', 'Giorgian De Arrascaeta', 'Uruguay','comun'),
+  (v_album_id,'URU-12', 'Rodrigo Bentancur', 'Uruguay','comun'),
+  (v_album_id,'URU-13', 'Uruguay - Foto del Equipo', 'Uruguay','comun'),
+  (v_album_id,'URU-14', 'Manuel Ugarte', 'Uruguay','comun'),
+  (v_album_id,'URU-15', 'Nicolas de la Cruz', 'Uruguay','comun'),
+  (v_album_id,'URU-16', 'Maximiliano Araujo', 'Uruguay','comun'),
+  (v_album_id,'URU-17', 'Darwin Núñez', 'Uruguay','comun'),
+  (v_album_id,'URU-18', 'Federico Viñas', 'Uruguay','comun'),
+  (v_album_id,'URU-19', 'Rodrigo Aguirre', 'Uruguay','comun'),
+  (v_album_id,'URU-20', 'Facundo Pellistri', 'Uruguay','comun');
+
+-- ---- FRANCIA (FRA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'FRA-1', 'Francia - Escudo', 'Francia','rara'),
+  (v_album_id,'FRA-2', 'Mike Maignan', 'Francia','comun'),
+  (v_album_id,'FRA-3', 'Theo Hernández', 'Francia','comun'),
+  (v_album_id,'FRA-4', 'William Saliba', 'Francia','comun'),
+  (v_album_id,'FRA-5', 'Jules Koundé', 'Francia','comun'),
+  (v_album_id,'FRA-6', 'Ibrahima Konaté', 'Francia','comun'),
+  (v_album_id,'FRA-7', 'Davot Upamecano', 'Francia','comun'),
+  (v_album_id,'FRA-8', 'Lucas Digne', 'Francia','comun'),
+  (v_album_id,'FRA-9', 'Aurélien Tchouaméni', 'Francia','comun'),
+  (v_album_id,'FRA-10', 'Eduardo Camavinga', 'Francia','comun'),
+  (v_album_id,'FRA-11', 'Manu Kone', 'Francia','comun'),
+  (v_album_id,'FRA-12', 'Adrien Rabiot', 'Francia','comun'),
+  (v_album_id,'FRA-13', 'Francia - Foto del Equipo', 'Francia','comun'),
+  (v_album_id,'FRA-14', 'Michael Olise', 'Francia','comun'),
+  (v_album_id,'FRA-15', 'Ousmane Dembélé', 'Francia','comun'),
+  (v_album_id,'FRA-16', 'Bradley Barcola', 'Francia','comun'),
+  (v_album_id,'FRA-17', 'Desire Doue', 'Francia','comun'),
+  (v_album_id,'FRA-18', 'Kingsley Coman', 'Francia','comun'),
+  (v_album_id,'FRA-19', 'Hugo Ekitike', 'Francia','comun'),
+  (v_album_id,'FRA-20', 'Kylian Mbappé', 'Francia','comun');
+
+-- ---- SENEGAL (SEN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'SEN-1', 'Senegal - Escudo', 'Senegal','rara'),
+  (v_album_id,'SEN-2', 'Édouard Mendy', 'Senegal','comun'),
+  (v_album_id,'SEN-3', 'Seny Dieng', 'Senegal','comun'),
+  (v_album_id,'SEN-4', 'Kalidou Koulibaly', 'Senegal','comun'),
+  (v_album_id,'SEN-5', 'Abdou Diallo', 'Senegal','comun'),
+  (v_album_id,'SEN-6', 'Moussa Niakhaté', 'Senegal','comun'),
+  (v_album_id,'SEN-7', 'Ismail Jakobs', 'Senegal','comun'),
+  (v_album_id,'SEN-8', 'Formose Mendy', 'Senegal','comun'),
+  (v_album_id,'SEN-9', 'Idrissa Gueye', 'Senegal','comun'),
+  (v_album_id,'SEN-10', 'Pape Matar Sarr', 'Senegal','comun'),
+  (v_album_id,'SEN-11', 'Lamine Camara', 'Senegal','comun'),
+  (v_album_id,'SEN-12', 'Pape Gueye', 'Senegal','comun'),
+  (v_album_id,'SEN-13', 'Senegal - Foto del Equipo', 'Senegal','comun'),
+  (v_album_id,'SEN-14', 'Sadio Mané', 'Senegal','comun'),
+  (v_album_id,'SEN-15', 'Ismaïla Sarr', 'Senegal','comun'),
+  (v_album_id,'SEN-16', 'Nicolas Jackson', 'Senegal','comun'),
+  (v_album_id,'SEN-17', 'Iliman Ndiaye', 'Senegal','comun'),
+  (v_album_id,'SEN-18', 'Habib Diallo', 'Senegal','comun'),
+  (v_album_id,'SEN-19', 'Boulaye Dia', 'Senegal','comun'),
+  (v_album_id,'SEN-20', 'Cherif Ndiaye', 'Senegal','comun');
+
+-- ---- IRAK (IRQ) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'IRQ-1', 'Irak - Escudo', 'Irak','rara'),
+  (v_album_id,'IRQ-2', 'Jalal Hassan', 'Irak','comun'),
+  (v_album_id,'IRQ-3', 'Hussein Hassan', 'Irak','comun'),
+  (v_album_id,'IRQ-4', 'Rebin Sulaka', 'Irak','comun'),
+  (v_album_id,'IRQ-5', 'Saad Natiq', 'Irak','comun'),
+  (v_album_id,'IRQ-6', 'Merchas Doski', 'Irak','comun'),
+  (v_album_id,'IRQ-7', 'Zaid Tahseen', 'Irak','comun'),
+  (v_album_id,'IRQ-8', 'Hussein Ali', 'Irak','comun'),
+  (v_album_id,'IRQ-9', 'Amir Al-Ammari', 'Irak','comun'),
+  (v_album_id,'IRQ-10', 'Osama Rashid', 'Irak','comun'),
+  (v_album_id,'IRQ-11', 'Saffa Hadi', 'Irak','comun'),
+  (v_album_id,'IRQ-12', 'Ibrahim Bayesh', 'Irak','comun'),
+  (v_album_id,'IRQ-13', 'Irak - Foto del Equipo', 'Irak','comun'),
+  (v_album_id,'IRQ-14', 'Zidane Iqbal', 'Irak','comun'),
+  (v_album_id,'IRQ-15', 'Youssef Amyn', 'Irak','comun'),
+  (v_album_id,'IRQ-16', 'Ali Jassim', 'Irak','comun'),
+  (v_album_id,'IRQ-17', 'Bashar Resan', 'Irak','comun'),
+  (v_album_id,'IRQ-18', 'Aymen Hussein', 'Irak','comun'),
+  (v_album_id,'IRQ-19', 'Mohanad Ali', 'Irak','comun'),
+  (v_album_id,'IRQ-20', 'Ali Al-Hamadi', 'Irak','comun');
+
+-- ---- NORUEGA (NOR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'NOR-1', 'Noruega - Escudo', 'Noruega','rara'),
+  (v_album_id,'NOR-2', 'Ørjan Nyland', 'Noruega','comun'),
+  (v_album_id,'NOR-3', 'Egil Selvik', 'Noruega','comun'),
+  (v_album_id,'NOR-4', 'Leo Østigård', 'Noruega','comun'),
+  (v_album_id,'NOR-5', 'Kristoffer Ajer', 'Noruega','comun'),
+  (v_album_id,'NOR-6', 'Andreas Hanche-Olsen', 'Noruega','comun'),
+  (v_album_id,'NOR-7', 'Julian Ryerson', 'Noruega','comun'),
+  (v_album_id,'NOR-8', 'Sander Berge', 'Noruega','comun'),
+  (v_album_id,'NOR-9', 'Morten Thorsby', 'Noruega','comun'),
+  (v_album_id,'NOR-10', 'Martin Ødegaard', 'Noruega','comun'),
+  (v_album_id,'NOR-11', 'Kristian Thorstvedt', 'Noruega','comun'),
+  (v_album_id,'NOR-12', 'Patrick Berg', 'Noruega','comun'),
+  (v_album_id,'NOR-13', 'Noruega - Foto del Equipo', 'Noruega','comun'),
+  (v_album_id,'NOR-14', 'Antonio Nusa', 'Noruega','comun'),
+  (v_album_id,'NOR-15', 'Oscar Bobb', 'Noruega','comun'),
+  (v_album_id,'NOR-16', 'Aron Dønnum', 'Noruega','comun'),
+  (v_album_id,'NOR-17', 'Jørgen Strand Larsen', 'Noruega','comun'),
+  (v_album_id,'NOR-18', 'Erling Haaland', 'Noruega','comun'),
+  (v_album_id,'NOR-19', 'Alexander Sørloth', 'Noruega','comun'),
+  (v_album_id,'NOR-20', 'David Møller Wolfe', 'Noruega','comun');
+
+-- ---- ARGENTINA (ARG) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'ARG-1', 'Argentina - Escudo', 'Argentina','rara'),
+  (v_album_id,'ARG-2', 'Emiliano Martínez', 'Argentina','comun'),
+  (v_album_id,'ARG-3', 'Nahuel Molina', 'Argentina','comun'),
+  (v_album_id,'ARG-4', 'Cristian Romero', 'Argentina','comun'),
+  (v_album_id,'ARG-5', 'Nicolás Otamendi', 'Argentina','comun'),
+  (v_album_id,'ARG-6', 'Lisandro Martínez', 'Argentina','comun'),
+  (v_album_id,'ARG-7', 'Nicolás Tagliafico', 'Argentina','comun'),
+  (v_album_id,'ARG-8', 'Rodrigo De Paul', 'Argentina','comun'),
+  (v_album_id,'ARG-9', 'Enzo Fernández', 'Argentina','comun'),
+  (v_album_id,'ARG-10', 'Alexis Mac Allister', 'Argentina','comun'),
+  (v_album_id,'ARG-11', 'Leandro Paredes', 'Argentina','comun'),
+  (v_album_id,'ARG-12', 'Giovani Lo Celso', 'Argentina','comun'),
+  (v_album_id,'ARG-13', 'Argentina - Foto del Equipo', 'Argentina','comun'),
+  (v_album_id,'ARG-14', 'Ángel Di María', 'Argentina','comun'),
+  (v_album_id,'ARG-15', 'Lionel Messi', 'Argentina','comun'),
+  (v_album_id,'ARG-16', 'Julián Álvarez', 'Argentina','comun'),
+  (v_album_id,'ARG-17', 'Lautaro Martínez', 'Argentina','comun'),
+  (v_album_id,'ARG-18', 'Nicolás González', 'Argentina','comun'),
+  (v_album_id,'ARG-19', 'Alejandro Garnacho', 'Argentina','comun'),
+  (v_album_id,'ARG-20', 'Marcos Acuña', 'Argentina','comun');
+
+-- ---- ARGELIA (ALG) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'ALG-1', 'Argelia - Escudo', 'Argelia','rara'),
+  (v_album_id,'ALG-2', 'Anthony Mandrea', 'Argelia','comun'),
+  (v_album_id,'ALG-3', 'Alexandre Oukidja', 'Argelia','comun'),
+  (v_album_id,'ALG-4', 'Aissa Mandi', 'Argelia','comun'),
+  (v_album_id,'ALG-5', 'Rayan Aït-Nouri', 'Argelia','comun'),
+  (v_album_id,'ALG-6', 'Ramy Bensebaini', 'Argelia','comun'),
+  (v_album_id,'ALG-7', 'Youcef Atal', 'Argelia','comun'),
+  (v_album_id,'ALG-8', 'Mohamed Amine Tougai', 'Argelia','comun'),
+  (v_album_id,'ALG-9', 'Ismaël Bennacer', 'Argelia','comun'),
+  (v_album_id,'ALG-10', 'Houssem Aouar', 'Argelia','comun'),
+  (v_album_id,'ALG-11', 'Ramiz Zerrouki', 'Argelia','comun'),
+  (v_album_id,'ALG-12', 'Nabil Bentaleb', 'Argelia','comun'),
+  (v_album_id,'ALG-13', 'Argelia - Foto del Equipo', 'Argelia','comun'),
+  (v_album_id,'ALG-14', 'Riyad Mahrez', 'Argelia','comun'),
+  (v_album_id,'ALG-15', 'Saïd Benrahma', 'Argelia','comun'),
+  (v_album_id,'ALG-16', 'Mohamed Amoura', 'Argelia','comun'),
+  (v_album_id,'ALG-17', 'Baghdad Bounedjah', 'Argelia','comun'),
+  (v_album_id,'ALG-18', 'Amine Gouiri', 'Argelia','comun'),
+  (v_album_id,'ALG-19', 'Farès Chaïbi', 'Argelia','comun'),
+  (v_album_id,'ALG-20', 'Islam Slimani', 'Argelia','comun');
+
+-- ---- AUSTRIA (AUT) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'AUT-1', 'Austria - Escudo', 'Austria','rara'),
+  (v_album_id,'AUT-2', 'Alexander Schlager', 'Austria','comun'),
+  (v_album_id,'AUT-3', 'Patrick Pentz', 'Austria','comun'),
+  (v_album_id,'AUT-4', 'David Alaba', 'Austria','comun'),
+  (v_album_id,'AUT-5', 'Kevin Danso', 'Austria','comun'),
+  (v_album_id,'AUT-6', 'Stefan Posch', 'Austria','comun'),
+  (v_album_id,'AUT-7', 'Maximilian Wöber', 'Austria','comun'),
+  (v_album_id,'AUT-8', 'Philipp Lienhart', 'Austria','comun'),
+  (v_album_id,'AUT-9', 'Konrad Laimer', 'Austria','comun'),
+  (v_album_id,'AUT-10', 'Xaver Schlager', 'Austria','comun'),
+  (v_album_id,'AUT-11', 'Marcel Sabitzer', 'Austria','comun'),
+  (v_album_id,'AUT-12', 'Nicolas Seiwald', 'Austria','comun'),
+  (v_album_id,'AUT-13', 'Austria - Foto del Equipo', 'Austria','comun'),
+  (v_album_id,'AUT-14', 'Christoph Baumgartner', 'Austria','comun'),
+  (v_album_id,'AUT-15', 'Florian Grillitsch', 'Austria','comun'),
+  (v_album_id,'AUT-16', 'Patrick Wimmer', 'Austria','comun'),
+  (v_album_id,'AUT-17', 'Marko Arnautovic', 'Austria','comun'),
+  (v_album_id,'AUT-18', 'Michael Gregoritsch', 'Austria','comun'),
+  (v_album_id,'AUT-19', 'Romano Schmid', 'Austria','comun'),
+  (v_album_id,'AUT-20', 'Andreas Weimann', 'Austria','comun');
+
+-- ---- JORDANIA (JOR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'JOR-1', 'Jordania - Escudo', 'Jordania','rara'),
+  (v_album_id,'JOR-2', 'Yazid Abulaila', 'Jordania','comun'),
+  (v_album_id,'JOR-3', 'Abdallah Al-Fakhouri', 'Jordania','comun'),
+  (v_album_id,'JOR-4', 'Yazan Al-Arab', 'Jordania','comun'),
+  (v_album_id,'JOR-5', 'Abdallah Nasib', 'Jordania','comun'),
+  (v_album_id,'JOR-6', 'Salem Al-Ajalin', 'Jordania','comun'),
+  (v_album_id,'JOR-7', 'Ihsan Haddad', 'Jordania','comun'),
+  (v_album_id,'JOR-8', 'Nizar Al-Rashidan', 'Jordania','comun'),
+  (v_album_id,'JOR-9', 'Ibrahim Saadeh', 'Jordania','comun'),
+  (v_album_id,'JOR-10', 'Noor Al-Rawabdeh', 'Jordania','comun'),
+  (v_album_id,'JOR-11', 'Rajaei Ayed', 'Jordania','comun'),
+  (v_album_id,'JOR-12', 'Mahmoud Al-Mardi', 'Jordania','comun'),
+  (v_album_id,'JOR-13', 'Jordania - Foto del Equipo', 'Jordania','comun'),
+  (v_album_id,'JOR-14', 'Mousa Al-Tamari', 'Jordania','comun'),
+  (v_album_id,'JOR-15', 'Ali Olwan', 'Jordania','comun'),
+  (v_album_id,'JOR-16', 'Yazan Al-Naimat', 'Jordania','comun'),
+  (v_album_id,'JOR-17', 'Hamza Al-Dardour', 'Jordania','comun'),
+  (v_album_id,'JOR-18', 'Saleh Rateb', 'Jordania','comun'),
+  (v_album_id,'JOR-19', 'Anas Al-Awadat', 'Jordania','comun'),
+  (v_album_id,'JOR-20', 'Mohammad Abu Zrayq', 'Jordania','comun');
+
+-- ---- PORTUGAL (POR) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'POR-1', 'Portugal - Escudo', 'Portugal','rara'),
+  (v_album_id,'POR-2', 'Diogo Costa', 'Portugal','comun'),
+  (v_album_id,'POR-3', 'Jose Sa', 'Portugal','comun'),
+  (v_album_id,'POR-4', 'Ruben Dias', 'Portugal','comun'),
+  (v_album_id,'POR-5', 'Pepe', 'Portugal','comun'),
+  (v_album_id,'POR-6', 'Gonçalo Inácio', 'Portugal','comun'),
+  (v_album_id,'POR-7', 'João Cancelo', 'Portugal','comun'),
+  (v_album_id,'POR-8', 'Diogo Dalot', 'Portugal','comun'),
+  (v_album_id,'POR-9', 'Nuno Mendes', 'Portugal','comun'),
+  (v_album_id,'POR-10', 'João Palhinha', 'Portugal','comun'),
+  (v_album_id,'POR-11', 'Vitinha', 'Portugal','comun'),
+  (v_album_id,'POR-12', 'Bruno Fernandes', 'Portugal','comun'),
+  (v_album_id,'POR-13', 'Portugal - Foto del Equipo', 'Portugal','comun'),
+  (v_album_id,'POR-14', 'Bernardo Silva', 'Portugal','comun'),
+  (v_album_id,'POR-15', 'João Neves', 'Portugal','comun'),
+  (v_album_id,'POR-16', 'Rafael Leão', 'Portugal','comun'),
+  (v_album_id,'POR-17', 'Cristiano Ronaldo', 'Portugal','comun'),
+  (v_album_id,'POR-18', 'Diogo Jota', 'Portugal','comun'),
+  (v_album_id,'POR-19', 'Gonçalo Ramos', 'Portugal','comun'),
+  (v_album_id,'POR-20', 'João Félix', 'Portugal','comun');
+
+-- ---- REPÚBLICA DEMOCRÁTICA DEL CONGO (COD) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'COD-1', 'República Democrática del Congo - Escudo', 'República Democrática del Congo','rara'),
+  (v_album_id,'COD-2', 'Lionel Mpasi', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-3', 'Dimitry Bertaud', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-4', 'Chancel Mbemba', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-5', 'Dylan Batubinsika', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-6', 'Henock Inonga Baka', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-7', 'Arthur Masuaku', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-8', 'Gedeon Kalulu', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-9', 'Samuel Moutoussamy', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-10', 'Charles Pickel', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-11', 'Edo Kayembe', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-12', 'Gaël Kakuta', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-13', 'República Democrática del Congo - Foto del Equipo', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-14', 'Théo Bongonda', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-15', 'Meschack Elia', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-16', 'Yoane Wissa', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-17', 'Grady Diangana', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-18', 'Cédric Bakambu', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-19', 'Simon Banza', 'República Democrática del Congo','comun'),
+  (v_album_id,'COD-20', 'Fiston Mayele', 'República Democrática del Congo','comun');
+
+-- ---- UZBEKISTÁN (UZB) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'UZB-1', 'Uzbekistán - Escudo', 'Uzbekistán','rara'),
+  (v_album_id,'UZB-2', 'Utkir Yusupov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-3', 'Abduvoxid Nematov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-4', 'Rustam Ashurmatov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-5', 'Umar Eshmurodov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-6', 'Abdukodir Khusanov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-7', 'Sherzod Nasrullaev', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-8', 'Khusniddin Alikulov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-9', 'Odiljon Hamrobekov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-10', 'Otabek Shukurov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-11', 'Jaloliddin Masharipov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-12', 'Jamshid Iskanderov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-13', 'Uzbekistán - Foto del Equipo', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-14', 'Oston Urunov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-15', 'Abbosbek Fayzullaev', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-16', 'Hojimat Erkinov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-17', 'Eldor Shomurodov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-18', 'Igor Sergeev', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-19', 'Azizbek Amonov', 'Uzbekistán','comun'),
+  (v_album_id,'UZB-20', 'Faridun Davlatyon', 'Uzbekistán','comun');
+
+-- ---- COLOMBIA (COL) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'COL-1', 'Colombia - Escudo', 'Colombia','rara'),
+  (v_album_id,'COL-2', 'Camilo Vargas', 'Colombia','comun'),
+  (v_album_id,'COL-3', 'David Ospina', 'Colombia','comun'),
+  (v_album_id,'COL-4', 'Davinson Sánchez', 'Colombia','comun'),
+  (v_album_id,'COL-5', 'Carlos Cuesta', 'Colombia','comun'),
+  (v_album_id,'COL-6', 'Yerry Mina', 'Colombia','comun'),
+  (v_album_id,'COL-7', 'Daniel Muñoz', 'Colombia','comun'),
+  (v_album_id,'COL-8', 'Johan Mojica', 'Colombia','comun'),
+  (v_album_id,'COL-9', 'Jefferson Lerma', 'Colombia','comun'),
+  (v_album_id,'COL-10', 'Richard Ríos', 'Colombia','comun'),
+  (v_album_id,'COL-11', 'Mateus Uribe', 'Colombia','comun'),
+  (v_album_id,'COL-12', 'James Rodríguez', 'Colombia','comun'),
+  (v_album_id,'COL-13', 'Colombia - Foto del Equipo', 'Colombia','comun'),
+  (v_album_id,'COL-14', 'Jhon Arias', 'Colombia','comun'),
+  (v_album_id,'COL-15', 'Luis Díaz', 'Colombia','comun'),
+  (v_album_id,'COL-16', 'Luis Sinisterra', 'Colombia','comun'),
+  (v_album_id,'COL-17', 'Jhon Durán', 'Colombia','comun'),
+  (v_album_id,'COL-18', 'Rafael Santos Borré', 'Colombia','comun'),
+  (v_album_id,'COL-19', 'Jhon Córdoba', 'Colombia','comun'),
+  (v_album_id,'COL-20', 'Miguel Borja', 'Colombia','comun');
+
+-- ---- INGLATERRA (ENG) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'ENG-1', 'Inglaterra - Escudo', 'Inglaterra','rara'),
+  (v_album_id,'ENG-2', 'Jordan Pickford', 'Inglaterra','comun'),
+  (v_album_id,'ENG-3', 'Aaron Ramsdale', 'Inglaterra','comun'),
+  (v_album_id,'ENG-4', 'Kyle Walker', 'Inglaterra','comun'),
+  (v_album_id,'ENG-5', 'John Stones', 'Inglaterra','comun'),
+  (v_album_id,'ENG-6', 'Harry Maguire', 'Inglaterra','comun'),
+  (v_album_id,'ENG-7', 'Kieran Trippier', 'Inglaterra','comun'),
+  (v_album_id,'ENG-8', 'Marc Guéhi', 'Inglaterra','comun'),
+  (v_album_id,'ENG-9', 'Declan Rice', 'Inglaterra','comun'),
+  (v_album_id,'ENG-10', 'Jude Bellingham', 'Inglaterra','comun'),
+  (v_album_id,'ENG-11', 'Trent Alexander-Arnold', 'Inglaterra','comun'),
+  (v_album_id,'ENG-12', 'Conor Gallagher', 'Inglaterra','comun'),
+  (v_album_id,'ENG-13', 'Inglaterra - Foto del Equipo', 'Inglaterra','comun'),
+  (v_album_id,'ENG-14', 'Phil Foden', 'Inglaterra','comun'),
+  (v_album_id,'ENG-15', 'Bukayo Saka', 'Inglaterra','comun'),
+  (v_album_id,'ENG-16', 'Cole Palmer', 'Inglaterra','comun'),
+  (v_album_id,'ENG-17', 'Harry Kane', 'Inglaterra','comun'),
+  (v_album_id,'ENG-18', 'Ollie Watkins', 'Inglaterra','comun'),
+  (v_album_id,'ENG-19', 'Anthony Gordon', 'Inglaterra','comun'),
+  (v_album_id,'ENG-20', 'Jarrod Bowen', 'Inglaterra','comun');
+
+-- ---- CROACIA (CRO) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CRO-1', 'Croacia - Escudo', 'Croacia','rara'),
+  (v_album_id,'CRO-2', 'Dominik Livaković', 'Croacia','comun'),
+  (v_album_id,'CRO-3', 'Nediljko Labrović', 'Croacia','comun'),
+  (v_album_id,'CRO-4', 'Joško Gvardiol', 'Croacia','comun'),
+  (v_album_id,'CRO-5', 'Josip Šutalo', 'Croacia','comun'),
+  (v_album_id,'CRO-6', 'Josip Stanišić', 'Croacia','comun'),
+  (v_album_id,'CRO-7', 'Borna Sosa', 'Croacia','comun'),
+  (v_album_id,'CRO-8', 'Domagoj Vida', 'Croacia','comun'),
+  (v_album_id,'CRO-9', 'Luka Modrić', 'Croacia','comun'),
+  (v_album_id,'CRO-10', 'Mateo Kovačić', 'Croacia','comun'),
+  (v_album_id,'CRO-11', 'Marcelo Brozović', 'Croacia','comun'),
+  (v_album_id,'CRO-12', 'Lovro Majer', 'Croacia','comun'),
+  (v_album_id,'CRO-13', 'Croacia - Foto del Equipo', 'Croacia','comun'),
+  (v_album_id,'CRO-14', 'Mario Pašalić', 'Croacia','comun'),
+  (v_album_id,'CRO-15', 'Luka Ivanušec', 'Croacia','comun'),
+  (v_album_id,'CRO-16', 'Andrej Kramarić', 'Croacia','comun'),
+  (v_album_id,'CRO-17', 'Ivan Perišić', 'Croacia','comun'),
+  (v_album_id,'CRO-18', 'Bruno Petković', 'Croacia','comun'),
+  (v_album_id,'CRO-19', 'Ante Budimir', 'Croacia','comun'),
+  (v_album_id,'CRO-20', 'Marco Pašalić', 'Croacia','comun');
+
+-- ---- GHANA (GHA) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'GHA-1', 'Ghana - Escudo', 'Ghana','rara'),
+  (v_album_id,'GHA-2', 'Lawrence Ati-Zigi', 'Ghana','comun'),
+  (v_album_id,'GHA-3', 'Richard Ofori', 'Ghana','comun'),
+  (v_album_id,'GHA-4', 'Mohammed Salisu', 'Ghana','comun'),
+  (v_album_id,'GHA-5', 'Alexander Djiku', 'Ghana','comun'),
+  (v_album_id,'GHA-6', 'Alidu Seidu', 'Ghana','comun'),
+  (v_album_id,'GHA-7', 'Gideon Mensah', 'Ghana','comun'),
+  (v_album_id,'GHA-8', 'Daniel Amartey', 'Ghana','comun'),
+  (v_album_id,'GHA-9', 'Thomas Partey', 'Ghana','comun'),
+  (v_album_id,'GHA-10', 'Mohammed Kudus', 'Ghana','comun'),
+  (v_album_id,'GHA-11', 'Salis Abdul Samed', 'Ghana','comun'),
+  (v_album_id,'GHA-12', 'Elisha Owusu', 'Ghana','comun'),
+  (v_album_id,'GHA-13', 'Ghana - Foto del Equipo', 'Ghana','comun'),
+  (v_album_id,'GHA-14', 'Jordan Ayew', 'Ghana','comun'),
+  (v_album_id,'GHA-15', 'André Ayew', 'Ghana','comun'),
+  (v_album_id,'GHA-16', 'Ernest Nuamah', 'Ghana','comun'),
+  (v_album_id,'GHA-17', 'Osman Bukari', 'Ghana','comun'),
+  (v_album_id,'GHA-18', 'Inaki Williams', 'Ghana','comun'),
+  (v_album_id,'GHA-19', 'Antoine Semenyo', 'Ghana','comun'),
+  (v_album_id,'GHA-20', 'Ibrahim Osman', 'Ghana','comun');
+
+-- ---- PANAMÁ (PAN) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'PAN-1', 'Panamá - Escudo', 'Panamá','rara'),
+  (v_album_id,'PAN-2', 'Orlando Mosquera', 'Panamá','comun'),
+  (v_album_id,'PAN-3', 'Luis Mejía', 'Panamá','comun'),
+  (v_album_id,'PAN-4', 'José Córdoba', 'Panamá','comun'),
+  (v_album_id,'PAN-5', 'Edgardo Fariña', 'Panamá','comun'),
+  (v_album_id,'PAN-6', 'José Guaimaro', 'Panamá','comun'),
+  (v_album_id,'PAN-7', 'Michael Murillo', 'Panamá','comun'),
+  (v_album_id,'PAN-8', 'Eric Davis', 'Panamá','comun'),
+  (v_album_id,'PAN-9', 'Adalberto Carrasquilla', 'Panamá','comun'),
+  (v_album_id,'PAN-10', 'Aníbal Godoy', 'Panamá','comun'),
+  (v_album_id,'PAN-11', 'Cristian Martínez', 'Panamá','comun'),
+  (v_album_id,'PAN-12', 'Abdiel Ayarza', 'Panamá','comun'),
+  (v_album_id,'PAN-13', 'Panamá - Foto del Equipo', 'Panamá','comun'),
+  (v_album_id,'PAN-14', 'Édgar Bárcenas', 'Panamá','comun'),
+  (v_album_id,'PAN-15', 'José Rodríguez', 'Panamá','comun'),
+  (v_album_id,'PAN-16', 'César Yanis', 'Panamá','comun'),
+  (v_album_id,'PAN-17', 'Ismael Díaz', 'Panamá','comun'),
+  (v_album_id,'PAN-18', 'José Fajardo', 'Panamá','comun'),
+  (v_album_id,'PAN-19', 'Eduardo Guerrero', 'Panamá','comun'),
+  (v_album_id,'PAN-20', 'Cecilio Waterman', 'Panamá','comun');
+
+-- ---- ESPECIALES FIFA WORLD CUP (FWC) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'FWC-9', 'Italy 1934', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-10', 'Uruguay 1950', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-11', 'Alemania 1954', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-12', 'Brasil 1962', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-13', 'Alemania FR 1974', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-14', 'Argentina 1986', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-15', 'Brasil 1994', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-16', 'Brasil 2002', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-17', 'Italy 2006', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-18', 'Alemania 2014', 'Especiales FIFA World Cup','rara'),
+  (v_album_id,'FWC-19', 'Argentina 2022', 'Especiales FIFA World Cup','rara');
+
+-- ---- COCA-COLA (CC) ----
+INSERT INTO public.barajitas (album_id, numero, nombre, equipo, rareza) VALUES
+  (v_album_id,'CC-1', 'Lamine Yamal', 'Coca-Cola','rara'),
+  (v_album_id,'CC-2', 'Joshua Kimmich', 'Coca-Cola','rara'),
+  (v_album_id,'CC-3', 'Harry Kane', 'Coca-Cola','rara'),
+  (v_album_id,'CC-4', 'Santiago Gimenez', 'Coca-Cola','rara'),
+  (v_album_id,'CC-5', 'Josko Gevardiol', 'Coca-Cola','rara'),
+  (v_album_id,'CC-6', 'Federico Valverde', 'Coca-Cola','rara'),
+  (v_album_id,'CC-7', 'jefferson Lerna', 'Coca-Cola','rara'),
+  (v_album_id,'CC-8', 'Enner Valencia', 'Coca-Cola','rara'),
+  (v_album_id,'CC-9', 'Gabriel Magalhaes', 'Coca-Cola','rara'),
+  (v_album_id,'CC-10', 'Virgil van Dijk', 'Coca-Cola','rara'),
+  (v_album_id,'CC-11', 'Alphonso Davies', 'Coca-Cola','rara'),
+  (v_album_id,'CC-12', 'Emiliano Martinez', 'Coca-Cola','rara'),
+  (v_album_id,'CC-13', 'Raul Jimenez', 'Coca-Cola','rara'),
+  (v_album_id,'CC-14', 'Lautaro Martinez', 'Coca-Cola','rara');
+
+
+  -- Actualizar total de barajitas del álbum
+  UPDATE public.albumes
+  SET total_barajitas = (SELECT COUNT(*) FROM public.barajitas WHERE album_id = v_album_id)
+  WHERE id = v_album_id;
+
+  RAISE NOTICE '✅ Barajitas insertadas: %', (SELECT COUNT(*) FROM public.barajitas WHERE album_id = v_album_id);
+
+END $$;

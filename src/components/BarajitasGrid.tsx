@@ -1,0 +1,160 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { Barajita } from "@/lib/types";
+import { Minus, Plus, Search } from "lucide-react";
+
+type Props = {
+  barajitas: Barajita[];
+  coleccionInicial: Record<string, number>;
+  isAuthed: boolean;
+};
+
+type Filtro = "todas" | "tengo" | "faltan" | "repetidas";
+
+export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }: Props) {
+  const [coleccion, setColeccion] = useState<Record<string, number>>(coleccionInicial);
+  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [busqueda, setBusqueda] = useState("");
+  const [, startTransition] = useTransition();
+  const supabase = useMemo(() => createClient(), []);
+
+  const filtradas = useMemo(() => {
+    return barajitas.filter((b) => {
+      const c = coleccion[b.id] ?? 0;
+      if (filtro === "tengo" && c < 1) return false;
+      if (filtro === "faltan" && c >= 1) return false;
+      if (filtro === "repetidas" && c < 2) return false;
+      if (busqueda) {
+        const q = busqueda.toLowerCase();
+        const hay = [b.numero, b.nombre, b.equipo].filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [barajitas, coleccion, filtro, busqueda]);
+
+  async function actualizar(barajitaId: string, nuevaCantidad: number) {
+    if (!isAuthed) {
+      alert("Inicia sesión para gestionar tu colección.");
+      return;
+    }
+    const cantidad = Math.max(0, nuevaCantidad);
+
+    // Optimistic update
+    setColeccion((prev) => ({ ...prev, [barajitaId]: cantidad }));
+
+    startTransition(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (cantidad === 0) {
+        await supabase
+          .from("coleccion")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("barajita_id", barajitaId);
+      } else {
+        await supabase
+          .from("coleccion")
+          .upsert(
+            { user_id: user.id, barajita_id: barajitaId, cantidad, updated_at: new Date().toISOString() },
+            { onConflict: "user_id,barajita_id" }
+          );
+      }
+    });
+  }
+
+  const counts = useMemo(() => {
+    let tengo = 0, faltan = 0, repetidas = 0;
+    for (const b of barajitas) {
+      const c = coleccion[b.id] ?? 0;
+      if (c >= 1) tengo++;
+      else faltan++;
+      if (c >= 2) repetidas++;
+    }
+    return { tengo, faltan, repetidas };
+  }, [barajitas, coleccion]);
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-2">
+        <FilterChip active={filtro === "todas"}    onClick={() => setFiltro("todas")}    label={`Todas (${barajitas.length})`} />
+        <FilterChip active={filtro === "tengo"}    onClick={() => setFiltro("tengo")}    label={`Tengo (${counts.tengo})`} />
+        <FilterChip active={filtro === "faltan"}   onClick={() => setFiltro("faltan")}   label={`Faltan (${counts.faltan})`} />
+        <FilterChip active={filtro === "repetidas"} onClick={() => setFiltro("repetidas")} label={`Repetidas (${counts.repetidas})`} />
+      </div>
+
+      {/* Buscador */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          type="search"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar por número, nombre o equipo..."
+          className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {filtradas.map((b) => {
+          const c = coleccion[b.id] ?? 0;
+          const estado =
+            c === 0 ? "border-gray-200 bg-gray-50" :
+            c === 1 ? "border-green-300 bg-green-50" :
+            "border-blue-300 bg-blue-50";
+          return (
+            <div key={b.id} className={`rounded-xl border-2 p-3 ${estado}`}>
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-semibold uppercase text-gray-500">#{b.numero}</span>
+                {b.rareza === "legendaria" && <span className="text-xs">⭐</span>}
+                {b.rareza === "rara" && <span className="text-xs">✨</span>}
+              </div>
+              <p className="mt-1 line-clamp-2 text-sm font-medium text-gray-900">{b.nombre ?? `Barajita ${b.numero}`}</p>
+              {b.equipo && <p className="text-xs text-gray-500">{b.equipo}</p>}
+              <div className="mt-3 flex items-center justify-between">
+                <button
+                  onClick={() => actualizar(b.id, c - 1)}
+                  disabled={!isAuthed || c <= 0}
+                  className="rounded-full bg-white p-1.5 text-gray-600 shadow-sm hover:bg-gray-100 disabled:opacity-40"
+                  aria-label="Restar"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="text-lg font-bold">{c}</span>
+                <button
+                  onClick={() => actualizar(b.id, c + 1)}
+                  disabled={!isAuthed}
+                  className="rounded-full bg-brand-600 p-1.5 text-white shadow-sm hover:bg-brand-700 disabled:opacity-40"
+                  aria-label="Sumar"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {filtradas.length === 0 && (
+          <p className="col-span-full text-center text-sm text-gray-500">No hay barajitas con esos filtros.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilterChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+        active ? "bg-brand-600 text-white" : "bg-white text-gray-700 border hover:border-brand-300"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
