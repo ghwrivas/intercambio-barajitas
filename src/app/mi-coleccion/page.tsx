@@ -41,9 +41,6 @@ export default async function MiColeccion() {
 
   return (
     <div className="space-y-6 py-4">
-      <div>
-        <p>Estamos trabajando en la corrección de los nombres de jugadores pero puedes utilizar los codigos de barajitas.</p>
-      </div>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">Mi colección</h1>
