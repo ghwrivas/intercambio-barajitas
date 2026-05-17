@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BarajitasGrid from "@/components/BarajitasGrid";
 
+export const dynamic = "force-dynamic";
+
 export default async function MiColeccion() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
