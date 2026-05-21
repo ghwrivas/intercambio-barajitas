@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Barajita } from "@/lib/types";
 import { Minus, Plus, Search } from "lucide-react";
-import { getFlagEmoji } from "@/lib/flags";
+import { getCountryIso } from "@/lib/flags";
 
 type Props = {
   barajitas: Barajita[];
@@ -117,10 +117,13 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
               </div>
               <p className="mt-1 line-clamp-2 text-sm font-medium text-gray-900">{b.nombre ?? `Barajita ${b.numero}`}</p>
               {b.equipo && (
-                <p className="text-xs text-gray-500">
-                  {getFlagEmoji(b.equipo)
-                    ? <span className="mr-1" aria-hidden="true">{getFlagEmoji(b.equipo)}</span>
-                    : null}
+                <p className="flex items-center gap-1 text-xs text-gray-500">
+                  {getCountryIso(b.equipo) && (
+                    <span
+                      className={`fi fi-${getCountryIso(b.equipo)} rounded-sm`}
+                      aria-hidden="true"
+                    />
+                  )}
                   {b.equipo}
                 </p>
               )}
