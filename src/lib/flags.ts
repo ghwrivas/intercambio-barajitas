@@ -1,79 +1,73 @@
 /**
- * Convierte un código ISO 3166-1 alpha-2 en el emoji de bandera correspondiente.
- * Funciona combinando dos Regional Indicator Symbols (Unicode).
- * Ejemplo: "AR" → 🇦🇷, "BR" → 🇧🇷
- */
-function isoToFlag(iso2: string): string {
-  return [...iso2.toUpperCase()]
-    .map((c) => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1f1e6))
-    .join("");
-}
-
-/**
  * Mapeo de nombre de equipo/país (en español, tal como se guarda en BD)
- * al código ISO 3166-1 alpha-2 para generar el emoji de bandera.
+ * al código ISO 3166-1 alpha-2.
+ *
+ * Se usa con la librería `flag-icons` para mostrar banderas SVG:
+ *   <span className={`fi fi-${getIso2(equipo)}`} />
+ *
+ * flag-icons usa la clase `fi-XX` donde XX es el código ISO en minúsculas.
+ * Docs: https://github.com/lipis/flag-icons
  */
 const EQUIPO_ISO: Record<string, string> = {
   // CONMEBOL
-  Argentina:       "AR",
-  Brasil:          "BR",
-  Colombia:        "CO",
-  Uruguay:         "UY",
-  Ecuador:         "EC",
-  Venezuela:       "VE",
+  Argentina:        "ar",
+  Brasil:           "br",
+  Colombia:         "co",
+  Uruguay:          "uy",
+  Ecuador:          "ec",
+  Venezuela:        "ve",
   // CONCACAF
-  "Estados Unidos": "US",
-  Canadá:          "CA",
-  México:          "MX",
-  Panamá:          "PA",
-  Jamaica:         "JM",
-  "Costa Rica":    "CR",
+  "Estados Unidos": "us",
+  Canadá:           "ca",
+  México:           "mx",
+  Panamá:           "pa",
+  Jamaica:          "jm",
+  "Costa Rica":     "cr",
   // UEFA
-  Alemania:        "DE",
-  España:          "ES",
-  Portugal:        "PT",
-  Francia:         "FR",
-  "Países Bajos":  "NL",
-  Bélgica:         "BE",
-  Italia:          "IT",
-  Croacia:         "HR",
-  Suiza:           "CH",
-  Austria:         "AT",
-  Hungría:         "HU",
-  Eslovaquia:      "SK",
-  Serbia:          "RS",
-  Turquía:         "TR",
-  // UEFA – flags con subdivisión (emoji especial)
-  Inglaterra:      "GB", // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 requiere secuencia larga; usamos 🇬🇧 como fallback
-  Escocia:         "GB", // ídem
+  Alemania:         "de",
+  España:           "es",
+  Portugal:         "pt",
+  Francia:          "fr",
+  "Países Bajos":   "nl",
+  Bélgica:          "be",
+  Italia:           "it",
+  Croacia:          "hr",
+  Suiza:            "ch",
+  Austria:          "at",
+  Hungría:          "hu",
+  Eslovaquia:       "sk",
+  Serbia:           "rs",
+  Turquía:          "tr",
+  Inglaterra:       "gb-eng", // flag-icons soporta subdivisiones GB
+  Escocia:          "gb-sct",
   // AFC
-  Japón:           "JP",
-  "Corea del Sur": "KR",
-  Irán:            "IR",
-  Australia:       "AU",
-  "Arabia Saudita": "SA",
-  Catar:           "QA",
-  Uzbekistán:      "UZ",
-  Indonesia:       "ID",
+  Japón:            "jp",
+  "Corea del Sur":  "kr",
+  Irán:             "ir",
+  Australia:        "au",
+  "Arabia Saudita": "sa",
+  Catar:            "qa",
+  Uzbekistán:       "uz",
+  Indonesia:        "id",
   // CAF
-  Marruecos:       "MA",
-  Senegal:         "SN",
-  Nigeria:         "NG",
-  Egipto:          "EG",
-  Camerún:         "CM",
-  Sudáfrica:       "ZA",
-  "RD Congo":      "CD",
-  Mali:            "ML",
-  Túnez:           "TN",
+  Marruecos:        "ma",
+  Senegal:          "sn",
+  Nigeria:          "ng",
+  Egipto:           "eg",
+  Camerún:          "cm",
+  Sudáfrica:        "za",
+  "RD Congo":       "cd",
+  Mali:             "ml",
+  Túnez:            "tn",
   // OFC
-  "Nueva Zelanda": "NZ",
+  "Nueva Zelanda":  "nz",
 };
 
 /**
- * Devuelve el emoji de bandera para un nombre de equipo/país.
- * Si no se reconoce el nombre, devuelve una cadena vacía.
+ * Devuelve el código ISO 3166-1 alpha-2 (en minúsculas) para un equipo/país.
+ * Retorna null si el nombre no está mapeado.
+ * Úsalo así: <span className={`fi fi-${getCountryIso(equipo)`} />
  */
-export function getFlagEmoji(equipo: string): string {
-  const iso = EQUIPO_ISO[equipo];
-  return iso ? isoToFlag(iso) : "";
+export function getCountryIso(equipo: string): string | null {
+  return EQUIPO_ISO[equipo] ?? null;
 }
