@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Barajita } from "@/lib/types";
 import { Minus, Plus, Search } from "lucide-react";
-import { getCountryIso } from "@/lib/flags";
+import { getCountryIso, getCountryFifa } from "@/lib/flags";
 
 type Props = {
   barajitas: Barajita[];
@@ -13,12 +13,25 @@ type Props = {
 };
 
 type Filtro = "todas" | "tengo" | "faltan" | "repetidas";
+type CampoBusqueda = "numero" | "nombre" | "equipo";
 
 export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }: Props) {
   const [coleccion, setColeccion] = useState<Record<string, number>>(coleccionInicial);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busqueda, setBusqueda] = useState("");
+  const [camposBusqueda, setCamposBusqueda] = useState<Set<CampoBusqueda>>(
+    new Set(["numero", "nombre", "equipo"])
+  );
   const [, startTransition] = useTransition();
+
+  function toggleCampo(campo: CampoBusqueda) {
+    setCamposBusqueda((prev) => {
+      const next = new Set(prev);
+      if (next.has(campo) && next.size > 1) next.delete(campo);
+      else next.add(campo);
+      return next;
+    });
+  }
   const supabase = useMemo(() => createClient(), []);
 
   const filtradas = useMemo(() => {
@@ -29,12 +42,19 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
       if (filtro === "repetidas" && c < 2) return false;
       if (busqueda) {
         const q = busqueda.toLowerCase();
-        const hay = [b.numero, b.nombre, b.equipo].filter(Boolean).join(" ").toLowerCase();
+        const partes: (string | null | undefined)[] = [];
+        if (camposBusqueda.has("numero")) partes.push(b.numero);
+        if (camposBusqueda.has("nombre")) partes.push(b.nombre);
+        if (camposBusqueda.has("equipo")) {
+          partes.push(b.equipo);
+          if (b.equipo) partes.push(getCountryFifa(b.equipo));
+        }
+        const hay = partes.filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [barajitas, coleccion, filtro, busqueda]);
+  }, [barajitas, coleccion, filtro, busqueda, camposBusqueda]);
 
   async function actualizar(barajitaId: string, nuevaCantidad: number) {
     if (!isAuthed) {
@@ -89,15 +109,37 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
       </div>
 
       {/* Buscador */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
-          type="search"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar por número, nombre o equipo..."
-          className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder={`Buscar por ${[
+              camposBusqueda.has("numero") && "número",
+              camposBusqueda.has("nombre") && "nombre",
+              camposBusqueda.has("equipo") && "equipo",
+            ].filter(Boolean).join(", ")}...`}
+            className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
+        <div className="flex gap-2">
+          <span className="self-center text-xs text-gray-400">Buscar en:</span>
+          {(["numero", "nombre", "equipo"] as CampoBusqueda[]).map((campo) => (
+            <button
+              key={campo}
+              onClick={() => toggleCampo(campo)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition border ${
+                camposBusqueda.has(campo)
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "bg-white text-gray-500 border-gray-300 hover:border-brand-300"
+              }`}
+            >
+              {campo === "numero" ? "#Número" : campo === "nombre" ? "Nombre" : "Equipo"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}

@@ -85,3 +85,76 @@ const EQUIPO_ISO: Record<string, string> = {
 export function getCountryIso(equipo: string): string | null {
   return EQUIPO_ISO[equipo] ?? null;
 }
+
+const EQUIPO_FIFA: Record<string, string> = {
+  // CONMEBOL
+  Argentina:   "ARG",
+  Brasil:      "BRA",
+  Colombia:    "COL",
+  Uruguay:     "URU",
+  Ecuador:     "ECU",
+  Venezuela:   "VEN",
+  Paraguay:    "PAR",
+  // CONCACAF
+  "Estados Unidos": "USA",
+  Canadá:      "CAN",
+  México:      "MEX",
+  Panamá:      "PAN",
+  Jamaica:     "JAM",
+  "Costa Rica": "CRC",
+  // UEFA
+  Alemania:    "GER",
+  España:      "ESP",
+  Portugal:    "POR",
+  Francia:     "FRA",
+  "Países Bajos": "NED",
+  Bélgica:     "BEL",
+  Italia:      "ITA",
+  Croacia:     "CRO",
+  Suiza:       "SUI",
+  Austria:     "AUT",
+  Hungría:     "HUN",
+  Eslovaquia:  "SVK",
+  Serbia:      "SRB",
+  Turquía:     "TUR",
+  Inglaterra:  "ENG",
+  Escocia:     "SCO",
+  "Bosnia y Herzegovina": "BIH",
+  "República Checa": "CZE",
+  Noruega:     "NOR",
+  Suecia:      "SWE",
+  // AFC
+  Japón:       "JPN",
+  "Corea del Sur": "KOR",
+  Irán:        "IRN",
+  Australia:   "AUS",
+  "Arabia Saudita": "KSA",
+  Catar:       "QAT",
+  Uzbekistán:  "UZB",
+  Indonesia:   "IDN",
+  Irak:        "IRQ",
+  Jordania:    "JOR",
+  // CAF
+  Argelia:     "ALG",
+  Marruecos:   "MAR",
+  Senegal:     "SEN",
+  Nigeria:     "NGA",
+  Egipto:      "EGY",
+  Camerún:     "CMR",
+  Sudáfrica:   "RSA",
+  "República Democrática del Congo": "COD",
+  Mali:        "MLI",
+  Túnez:       "TUN",
+  "Costa de Marfil": "CIV",
+  "Cabo Verde": "CPV",
+  Curazao:     "CUW",
+  Ghana:       "GHA",
+  Haití:       "HAI",
+  // OFC
+  "Nueva Zelanda": "NZL",
+};
+
+/** Código FIFA de 3 letras para un equipo/país. Null si no mapeado. */
+export function getCountryFifa(equipo: string): string | null {
+  return EQUIPO_FIFA[equipo] ?? null;
+}
