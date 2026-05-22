@@ -61,6 +61,7 @@ export default async function MiColeccion() {
         barajitas={barajitas ?? []}
         coleccionInicial={coleccion}
         isAuthed
+        albumNombre={album.nombre}
       />
     </div>
   );

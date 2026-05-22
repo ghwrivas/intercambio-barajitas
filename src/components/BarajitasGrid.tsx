@@ -1,27 +1,32 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Barajita } from "@/lib/types";
-import { Minus, Plus, Search } from "lucide-react";
+import { Camera, Download, Minus, Plus, Search, X } from "lucide-react";
 import { getCountryIso, getCountryFifa } from "@/lib/flags";
+import { ColeccionSnapshot } from "@/components/ColeccionSnapshot";
 
 type Props = {
   barajitas: Barajita[];
   coleccionInicial: Record<string, number>;
   isAuthed: boolean;
+  albumNombre?: string;
 };
 
 type Filtro = "todas" | "tengo" | "faltan" | "repetidas";
 type CampoBusqueda = "numero" | "nombre" | "equipo";
 
-export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }: Props) {
+export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed, albumNombre }: Props) {
   const [coleccion, setColeccion] = useState<Record<string, number>>(coleccionInicial);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busqueda, setBusqueda] = useState("");
   const [camposBusqueda, setCamposBusqueda] = useState<Set<CampoBusqueda>>(
     new Set(["numero", "nombre", "equipo"])
   );
+  const [showSnapshot, setShowSnapshot] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const snapshotRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
 
   function toggleCampo(campo: CampoBusqueda) {
@@ -87,6 +92,21 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
     });
   }
 
+  async function handleDownload() {
+    if (!snapshotRef.current) return;
+    setIsDownloading(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(snapshotRef.current, { pixelRatio: 2 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `coleccion-${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
   const counts = useMemo(() => {
     let tengo = 0, faltan = 0, repetidas = 0;
     for (const b of barajitas) {
@@ -100,12 +120,19 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2">
+      {/* Filtros + botón compartir */}
+      <div className="flex flex-wrap items-center gap-2">
         <FilterChip active={filtro === "todas"}    onClick={() => setFiltro("todas")}    label={`Todas (${barajitas.length})`} />
         <FilterChip active={filtro === "tengo"}    onClick={() => setFiltro("tengo")}    label={`Tengo (${counts.tengo})`} />
         <FilterChip active={filtro === "faltan"}   onClick={() => setFiltro("faltan")}   label={`Faltan (${counts.faltan})`} />
         <FilterChip active={filtro === "repetidas"} onClick={() => setFiltro("repetidas")} label={`Repetidas (${counts.repetidas})`} />
+        <button
+          onClick={() => setShowSnapshot(true)}
+          className="ml-auto flex items-center gap-1.5 rounded-full border border-brand-300 bg-white px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50 transition"
+        >
+          <Camera className="h-4 w-4" />
+          Compartir
+        </button>
       </div>
 
       {/* Buscador */}
@@ -195,6 +222,48 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed }:
           <p className="col-span-full text-center text-sm text-gray-500">No hay barajitas con esos filtros.</p>
         )}
       </div>
+
+      {/* Snapshot modal */}
+      {showSnapshot && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSnapshot(false); }}
+        >
+          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
+            {/* Modal header */}
+            <div className="flex items-center gap-3 border-b px-4 py-3">
+              <Camera className="h-5 w-5 text-brand-600" />
+              <span className="flex-1 font-semibold text-gray-800">Vista para compartir</span>
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60 transition"
+              >
+                <Download className="h-4 w-4" />
+                {isDownloading ? "Generando…" : "Descargar PNG"}
+              </button>
+              <button
+                onClick={() => setShowSnapshot(false)}
+                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100"
+                aria-label="Cerrar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Scrollable preview */}
+            <div className="overflow-auto flex-1 bg-gray-50 p-4">
+              <div className="inline-block min-w-full">
+                <ColeccionSnapshot
+                  ref={snapshotRef}
+                  barajitas={barajitas}
+                  coleccion={coleccion}
+                  albumNombre={albumNombre ?? "Mi colección"}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
