@@ -158,3 +158,17 @@ const EQUIPO_FIFA: Record<string, string> = {
 export function getCountryFifa(equipo: string): string | null {
   return EQUIPO_FIFA[equipo] ?? null;
 }
+
+/**
+ * Convierte un código ISO 3166-1 alpha-2 a emoji de bandera Unicode.
+ * Para subdivisiones como "gb-eng" usa la bandera del país padre.
+ */
+export function isoToFlagEmoji(iso2: string): string {
+  const code = iso2.includes("-") ? iso2.split("-")[0] : iso2;
+  const [a, b] = code.toUpperCase().split("");
+  if (!a || !b) return "";
+  return (
+    String.fromCodePoint(0x1f1e6 + a.charCodeAt(0) - 65) +
+    String.fromCodePoint(0x1f1e6 + b.charCodeAt(0) - 65)
+  );
+}

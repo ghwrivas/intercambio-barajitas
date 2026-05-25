@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Barajita } from "@/lib/types";
 import { Camera, Download, Minus, Plus, Search, X } from "lucide-react";
-import { getCountryIso, getCountryFifa } from "@/lib/flags";
+import { getCountryIso, getCountryFifa, isoToFlagEmoji } from "@/lib/flags";
 import { ColeccionSnapshot } from "@/components/ColeccionSnapshot";
 
 type Props = {
@@ -16,6 +16,60 @@ type Props = {
 
 type Filtro = "todas" | "tengo" | "faltan" | "repetidas";
 type CampoBusqueda = "numero" | "nombre" | "equipo";
+
+function buildWhatsAppText(
+  tipo: "faltan" | "tengo",
+  barajitas: Barajita[],
+  coleccion: Record<string, number>
+): string {
+  const header =
+    tipo === "faltan" ? "Me faltan 🔍" : "Tengo para cambiar 🔄";
+
+  const ordered: string[] = [];
+  const groups = new Map<string, Barajita[]>();
+
+  for (const b of barajitas) {
+    const c = coleccion[b.id] ?? 0;
+    const incluir = tipo === "faltan" ? c === 0 : c >= 2;
+    if (!incluir) continue;
+    const key = b.equipo ?? "Especiales";
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      ordered.push(key);
+    }
+    groups.get(key)!.push(b);
+  }
+
+  if (ordered.length === 0) {
+    return (
+      header +
+      "\n" +
+      (tipo === "faltan" ? "¡Colección completa! 🎉" : "No tengo repetidas aún.")
+    );
+  }
+
+  const lines = ordered.map((equipo) => {
+    const stickers = groups.get(equipo)!;
+    const iso = equipo !== "Especiales" ? getCountryIso(equipo) : null;
+    const emoji = iso ? isoToFlagEmoji(iso) : "🏆";
+    const code =
+      equipo !== "Especiales" ? (getCountryFifa(equipo) ?? equipo) : "ESP";
+
+    const nums = stickers
+      .map((b) => {
+        if (tipo === "tengo") {
+          const c = coleccion[b.id] ?? 0;
+          return c > 2 ? `${b.numero}×${c - 1}` : b.numero;
+        }
+        return b.numero;
+      })
+      .join(", ");
+
+    return `${code} ${emoji}: ${nums}`;
+  });
+
+  return `${header}\n${lines.join("\n")}`;
+}
 
 export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed, albumNombre }: Props) {
   const [coleccion, setColeccion] = useState<Record<string, number>>(coleccionInicial);
@@ -105,6 +159,11 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed, a
     } finally {
       setIsDownloading(false);
     }
+  }
+
+  function shareWhatsApp(tipo: "faltan" | "tengo") {
+    const text = buildWhatsAppText(tipo, barajitas, coleccion);
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
   const counts = useMemo(() => {
@@ -230,24 +289,42 @@ export default function BarajitasGrid({ barajitas, coleccionInicial, isAuthed, a
           onClick={(e) => { if (e.target === e.currentTarget) setShowSnapshot(false); }}
         >
           <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
-            {/* Modal header */}
-            <div className="flex items-center gap-3 border-b px-4 py-3">
-              <Camera className="h-5 w-5 text-brand-600" />
+            {/* Modal header — título + cerrar */}
+            <div className="flex items-center gap-3 px-4 pt-3 pb-2">
+              <Camera className="h-5 w-5 text-brand-600 shrink-0" />
               <span className="flex-1 font-semibold text-gray-800">Vista para compartir</span>
-              <button
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60 transition"
-              >
-                <Download className="h-4 w-4" />
-                {isDownloading ? "Generando…" : "Descargar PNG"}
-              </button>
               <button
                 onClick={() => setShowSnapshot(false)}
                 className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100"
                 aria-label="Cerrar"
               >
                 <X className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Acciones */}
+            <div className="flex flex-wrap gap-2 border-b px-4 pb-3">
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60 transition"
+              >
+                <Download className="h-4 w-4" />
+                {isDownloading ? "Generando…" : "Descargar PNG"}
+              </button>
+              <div className="h-7 w-px self-center bg-gray-200" />
+              <button
+                onClick={() => shareWhatsApp("faltan")}
+                className="flex items-center gap-1.5 rounded-full border border-green-600 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 transition"
+              >
+                <span className="text-base leading-none">📱</span>
+                WhatsApp: Me faltan
+              </button>
+              <button
+                onClick={() => shareWhatsApp("tengo")}
+                className="flex items-center gap-1.5 rounded-full border border-blue-600 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 transition"
+              >
+                <span className="text-base leading-none">📱</span>
+                WhatsApp: Tengo para cambiar
               </button>
             </div>
             {/* Scrollable preview */}

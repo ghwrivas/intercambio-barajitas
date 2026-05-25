@@ -1,17 +1,7 @@
 "use client";
 import { forwardRef } from "react";
 import type { Barajita } from "@/lib/types";
-import { getCountryIso } from "@/lib/flags";
-
-function isoToEmoji(iso2: string): string {
-  const code = iso2.includes("-") ? iso2.split("-")[0] : iso2;
-  const [a, b] = code.toUpperCase().split("");
-  if (!a || !b) return "";
-  return (
-    String.fromCodePoint(0x1f1e6 + a.charCodeAt(0) - 65) +
-    String.fromCodePoint(0x1f1e6 + b.charCodeAt(0) - 65)
-  );
-}
+import { getCountryIso, isoToFlagEmoji } from "@/lib/flags";
 
 type Props = {
   barajitas: Barajita[];
@@ -168,7 +158,7 @@ export const ColeccionSnapshot = forwardRef<HTMLDivElement, Props>(
               const stickers = groups.get(equipo)!;
               const iso =
                 equipo !== "Especiales" ? getCountryIso(equipo) : null;
-              const emoji = iso ? isoToEmoji(iso) : "";
+              const emoji = iso ? isoToFlagEmoji(iso) : "";
 
               const rowTengo = stickers.filter(
                 (b) => (coleccion[b.id] ?? 0) === 1
